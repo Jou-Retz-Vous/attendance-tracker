@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pointage JRV</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f9fafb; min-height: 100dvh; display: flex; align-items: flex-start; justify-content: center; padding: 2rem 1rem; }
+    main { background: white; border-radius: 12px; padding: 2rem; width: 100%; max-width: 420px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    h1 { font-size: 1.4rem; margin-bottom: 1.75rem; color: #111; }
+    label { display: block; font-size: .875rem; font-weight: 500; color: #374151; margin-bottom: .375rem; }
+    input, select {
+      width: 100%; padding: .75rem 1rem; font-size: 1rem;
+      border: 1px solid #d1d5db; border-radius: 8px; margin-bottom: 1.25rem;
+      background: white; color: #111; appearance: none;
+    }
+    input:focus, select:focus { outline: 2px solid #2563eb; border-color: transparent; }
+    .btn {
+      display: block; width: 100%; padding: .875rem;
+      font-size: 1rem; font-weight: 500; border-radius: 8px;
+      cursor: pointer; border: none; transition: background .15s;
+    }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-secondary { background: white; color: #2563eb; border: 1.5px solid #2563eb; margin-top: .75rem; }
+    .btn-secondary:hover { background: #eff6ff; }
+    #feedback { padding: .75rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: .9rem; display: none; }
+    .success { background: #dcfce7; color: #166534; }
+    .error   { background: #fee2e2; color: #991b1b; }
+    .divider { border: none; border-top: 1px solid #e5e7eb; margin: 1.75rem 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Pointage JRV</h1>
+
+  <div id="feedback"></div>
+
+  <label for="session">Séance</label>
+  <select id="session"></select>
+
+  <label for="name">Votre nom</label>
+  <input id="name" type="text" autocomplete="off" placeholder="Prénom Nom" list="suggestions">
+  <datalist id="suggestions"></datalist>
+
+  <button class="btn btn-primary" id="btn-self">Pointer ma présence</button>
+  <button class="btn btn-secondary" id="btn-proxy-toggle">Pointer quelqu'un d'autre</button>
+
+  <div id="proxy-section" hidden>
+    <hr class="divider">
+    <label for="proxy-name">Nom de la personne</label>
+    <input id="proxy-name" type="text" autocomplete="off" placeholder="Prénom Nom" list="proxy-suggestions">
+    <datalist id="proxy-suggestions"></datalist>
+    <button class="btn btn-primary" id="btn-proxy">Valider la présence</button>
+  </div>
+</main>
+
+<script>
+  const get  = path => fetch(path).then(r => r.json());
+  const post = (path, data) => fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(r => r.json());
+
+  function showFeedback(msg, type) {
+    const el = document.getElementById('feedback');
+    el.textContent = msg;
+    el.className = type;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  function formatSession(s) {
+    const d = new Date(s.start);
+    const label = d.toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    }) + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return s.title ? `${label} — ${s.title}` : label;
+  }
+
+  // Load sessions
+  get('/api/sessions.php').then(({ sessions = [] }) => {
+    const sel = document.getElementById('session');
+    sessions.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.uid;
+      opt.textContent = formatSession(s);
+      if (s.is_current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+
+  // Autocomplete
+  function autocomplete(inputId, datalistId) {
+    let timer;
+    document.getElementById(inputId).addEventListener('input', ({ target }) => {
+      clearTimeout(timer);
+      if (target.value.trim().length < 2) return;
+      timer = setTimeout(() => {
+        get(`/api/attendees.php?q=${encodeURIComponent(target.value.trim())}`)
+          .then(({ attendees = [] }) => {
+            const dl = document.getElementById(datalistId);
+            dl.innerHTML = '';
+            attendees.forEach(({ nickname }) => {
+              const opt = document.createElement('option');
+              opt.value = nickname;
+              dl.appendChild(opt);
+            });
+          });
+      }, 200);
+    });
+  }
+  autocomplete('name', 'suggestions');
+  autocomplete('proxy-name', 'proxy-suggestions');
+
+  // Self check-in
+  document.getElementById('btn-self').addEventListener('click', async () => {
+    const nickname = document.getElementById('name').value.trim();
+    if (!nickname) { showFeedback('Entrez votre nom.', 'error'); return; }
+    const res = await post('/api/checkin.php', {
+      session_uid: document.getElementById('session').value,
+      nickname,
+    });
+    if (res.ok) {
+      showFeedback(`Présence enregistrée pour ${res.nickname}.`, 'success');
+      document.getElementById('name').value = '';
+    } else {
+      showFeedback(res.error || 'Erreur.', 'error');
+    }
+  });
+
+  // Proxy section toggle
+  document.getElementById('btn-proxy-toggle').addEventListener('click', () => {
+    const s = document.getElementById('proxy-section');
+    s.hidden = !s.hidden;
+  });
+
+  // Proxy check-in
+  document.getElementById('btn-proxy').addEventListener('click', async () => {
+    const nickname      = document.getElementById('proxy-name').value.trim();
+    const checkedInBy   = document.getElementById('name').value.trim();
+    if (!nickname)    { showFeedback('Entrez le nom de la personne à pointer.', 'error'); return; }
+    if (!checkedInBy) { showFeedback('Entrez également votre propre nom.', 'error'); return; }
+    const res = await post('/api/checkin.php', {
+      session_uid: document.getElementById('session').value,
+      nickname,
+      checked_in_by_nickname: checkedInBy,
+    });
+    if (res.ok) {
+      showFeedback(`Présence enregistrée pour ${res.nickname}.`, 'success');
+      document.getElementById('proxy-name').value = '';
+      document.getElementById('proxy-section').hidden = true;
+    } else {
+      showFeedback(res.error || 'Erreur.', 'error');
+    }
+  });
+</script>
+</body>
+</html>

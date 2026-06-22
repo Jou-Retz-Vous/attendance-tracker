@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — Pointage JRV</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f9fafb; padding: 2rem 1rem; }
+    main { max-width: 640px; margin: 0 auto; }
+    h1 { font-size: 1.4rem; margin-bottom: 1.5rem; color: #111; }
+    label { display: block; font-size: .875rem; font-weight: 500; color: #374151; margin-bottom: .375rem; }
+    input, select {
+      width: 100%; padding: .75rem 1rem; font-size: 1rem;
+      border: 1px solid #d1d5db; border-radius: 8px; margin-bottom: 1.25rem;
+      background: white; appearance: none;
+    }
+    input:focus, select:focus { outline: 2px solid #2563eb; border-color: transparent; }
+    .btn { padding: .6rem 1.25rem; font-size: .9rem; font-weight: 500; border-radius: 8px; cursor: pointer; border: none; }
+    .btn-primary { background: #2563eb; color: white; }
+    .btn-primary:hover { background: #1d4ed8; }
+    .btn-danger  { background: white; color: #dc2626; border: 1.5px solid #dc2626; }
+    .btn-danger:hover  { background: #fef2f2; }
+    .btn-export  { background: white; color: #374151; border: 1.5px solid #d1d5db; margin-bottom: 1rem; }
+    #auth-section { background: white; border-radius: 12px; padding: 2rem; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    #app { display: none; }
+    #feedback { padding: .75rem 1rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: .9rem; display: none; }
+    .success { background: #dcfce7; color: #166534; }
+    .error   { background: #fee2e2; color: #991b1b; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+    th { background: #f3f4f6; text-align: left; padding: .75rem 1rem; font-size: .8rem; color: #6b7280; text-transform: uppercase; letter-spacing: .05em; }
+    td { padding: .75rem 1rem; border-top: 1px solid #f3f4f6; font-size: .9rem; }
+    td:last-child { text-align: right; }
+    .count { font-size: .875rem; color: #6b7280; margin-bottom: .75rem; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Administration — Pointage JRV</h1>
+
+  <div id="feedback"></div>
+
+  <div id="auth-section">
+    <label for="token">Mot de passe administrateur</label>
+    <input id="token" type="password" placeholder="Token">
+    <button class="btn btn-primary" id="btn-login">Connexion</button>
+  </div>
+
+  <div id="app">
+    <label for="session">Séance</label>
+    <select id="session"></select>
+
+    <button class="btn btn-export" id="btn-export">Exporter CSV</button>
+
+    <p class="count" id="count"></p>
+
+    <table id="table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Heure</th>
+          <th>Pointé par</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</main>
+
+<script>
+  let token = '';
+
+  const authGet  = path => fetch(path, { headers: { Authorization: `Bearer ${token}` } }).then(r => r.json());
+  const authPost = (path, data) => fetch(path, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  }).then(r => r.json());
+
+  const get = path => fetch(path).then(r => r.json());
+
+  function showFeedback(msg, type) {
+    const el = document.getElementById('feedback');
+    el.textContent = msg;
+    el.className = type;
+    el.style.display = 'block';
+    setTimeout(() => { el.style.display = 'none'; }, 4000);
+  }
+
+  function formatSession(s) {
+    const d = new Date(s.start);
+    const label = d.toLocaleDateString('fr-FR', {
+      weekday: 'long', day: 'numeric', month: 'long',
+    }) + ' ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+    return s.title ? `${label} — ${s.title}` : label;
+  }
+
+  function formatTime(iso) {
+    return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderCheckins(checkins) {
+    const tbody = document.getElementById('tbody');
+    tbody.innerHTML = '';
+    document.getElementById('count').textContent = `${checkins.length} présence(s)`;
+    checkins.forEach(c => {
+      const tr = document.createElement('tr');
+      tr.dataset.id = c.id;
+      tr.innerHTML = `
+        <td>${c.nickname}</td>
+        <td>${formatTime(c.created_at)}</td>
+        <td>${c.checked_in_by ?? '—'}</td>
+        <td><button class="btn btn-danger" data-id="${c.id}">Supprimer</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function loadCheckins() {
+    const uid = document.getElementById('session').value;
+    if (!uid) return;
+    authGet(`/api/admin/checkins.php?session_uid=${encodeURIComponent(uid)}`)
+      .then(({ checkins = [] }) => renderCheckins(checkins));
+  }
+
+  // Login
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    token = document.getElementById('token').value.trim();
+    const sessions = await get('/api/sessions.php').then(r => r.sessions ?? []);
+
+    // Validate token with a real admin call
+    const sel = document.getElementById('session');
+    if (sessions.length > 0) {
+      const test = await authGet(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessions[0].uid)}`);
+      if (!test.ok) { showFeedback('Token invalide.', 'error'); token = ''; return; }
+    }
+
+    sessions.forEach(s => {
+      const opt = document.createElement('option');
+      opt.value = s.uid;
+      opt.textContent = formatSession(s);
+      if (s.is_current) opt.selected = true;
+      sel.appendChild(opt);
+    });
+
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    loadCheckins();
+  });
+
+  document.getElementById('session').addEventListener('change', loadCheckins);
+
+  // Delete
+  document.getElementById('tbody').addEventListener('click', async e => {
+    const btn = e.target.closest('[data-id]');
+    if (!btn) return;
+    if (!confirm('Supprimer cette entrée ?')) return;
+    const res = await authPost('/api/admin/delete.php', { checkin_id: btn.dataset.id });
+    if (res.ok) {
+      btn.closest('tr').remove();
+      const count = document.getElementById('count');
+      count.textContent = count.textContent.replace(/\d+/, n => n - 1);
+    } else {
+      showFeedback(res.error || 'Erreur.', 'error');
+    }
+  });
+
+  // Export CSV
+  document.getElementById('btn-export').addEventListener('click', () => {
+    const rows = [['Nom', 'Heure', 'Pointé par']];
+    document.querySelectorAll('#tbody tr').forEach(tr => {
+      const cells = tr.querySelectorAll('td');
+      rows.push([cells[0].textContent, cells[1].textContent, cells[2].textContent]);
+    });
+    const csv  = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const a    = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `presences-${document.getElementById('session').value.slice(0, 10)}.csv`,
+    });
+    a.click();
+  });
+</script>
+</body>
+</html>
