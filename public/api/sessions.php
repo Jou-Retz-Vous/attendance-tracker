@@ -8,7 +8,10 @@ $config   = require __DIR__ . '/../../config.php';
 $calendar = new Calendar($config['calendar_url'], $config['cache_path']);
 
 try {
-    json_ok(['sessions' => $calendar->getSessions()]);
+    json_ok([
+        'association_name' => $config['association_name'],
+        'sessions'         => $calendar->getSessions(),
+    ]);
 } catch (RuntimeException $e) {
     json_error($e->getMessage(), 503);
 }
