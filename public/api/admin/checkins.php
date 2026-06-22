@@ -14,8 +14,8 @@ if (!$sessionUid) {
     json_error('session_uid is required');
 }
 
-if (!in_array($format, ['json', 'csv'], true)) {
-    json_error('format must be json or csv');
+if (!in_array($format, ['json', 'csv', 'grist'], true)) {
+    json_error('format must be json, csv or grist');
 }
 
 $stmt = Database::get()->prepare("
@@ -44,6 +44,20 @@ if ($format === 'csv') {
         fputcsv($out, [$row['nickname'], $row['checked_in_by'] ?? '', $row['created_at']]);
     }
     fclose($out);
+    exit;
+}
+
+if ($format === 'grist') {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'records' => array_map(fn($row) => [
+            'fields' => [
+                'nickname'       => $row['nickname'],
+                'checked_in_by'  => $row['checked_in_by'] ?? '',
+                'created_at'     => $row['created_at'],
+            ],
+        ], $rows),
+    ]);
     exit;
 }
 
