@@ -24,6 +24,7 @@ $i18n = [
         'fill_nickname'  => 'Entrez un pseudonyme.',
         'already'        => 'Déjà pointé pour cette séance.',
         'err_generic'    => 'Une erreur est survenue.',
+        'admin_link'     => 'Administration',
     ],
     'en' => [
         'title'          => fn($n) => "$n Attendance",
@@ -36,6 +37,7 @@ $i18n = [
         'fill_nickname'  => 'Enter a nickname.',
         'already'        => 'Already checked in for this session.',
         'err_generic'    => 'An error occurred.',
+        'admin_link'     => 'Administration',
     ],
 ];
 
@@ -161,6 +163,10 @@ $hasIntl = extension_loaded('intl');
         <button type="submit" class="btn btn-primary"><?= $t['btn_checkin'] ?></button>
       </div>
     </form>
+
+    <div class="text-center mt-3">
+      <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
+    </div>
   </div>
 </main>
 
