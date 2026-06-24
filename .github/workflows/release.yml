@@ -51,8 +51,10 @@ jobs:
 
       - name: Deploy via FTP
         run: |
-          lftp -c "
-            open -u '${{ vars.FTP_USER }},${{ secrets.FTP_PASSWORD }}' \
-                 ftp://${{ vars.FTP_HOST }}:${{ vars.FTP_PORT }}
-            mirror --reverse --verbose dist/ /
-          "
+          find dist -type f | sort | while IFS= read -r f; do
+            rel="${f#dist/}"
+            curl --silent --show-error --ftp-create-dirs \
+                 --upload-file "$f" \
+                 "ftp://${{ vars.FTP_USER }}:${{ secrets.FTP_PASSWORD }}@${{ vars.FTP_HOST }}:${{ vars.FTP_PORT }}/${rel}"
+            echo "✓ ${rel}"
+          done
