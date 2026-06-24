@@ -1,4 +1,4 @@
-name: Release
+name: Release & Deploy preprod
 
 on:
   push:
@@ -27,6 +27,12 @@ jobs:
           cp -r src dist/src
           cp .ovhconfig dist/.ovhconfig
 
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
       - name: Zip dist
         run: cd dist && zip -r ../dist.zip .
 
@@ -35,3 +41,24 @@ jobs:
         with:
           files: dist.zip
           generate_release_notes: true
+
+  deploy-preprod:
+    needs: release
+    runs-on: ubuntu-latest
+    environment: preprod
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Deploy via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ vars.FTP_HOST }}
+          port: ${{ vars.FTP_PORT }}
+          username: ${{ vars.FTP_USER }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: /
