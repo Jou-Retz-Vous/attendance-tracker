@@ -27,12 +27,6 @@ jobs:
           cp -r src dist/src
           cp .ovhconfig dist/.ovhconfig
 
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v5
-        with:
-          name: dist
-          path: dist/
-
       - name: Zip dist
         run: cd dist && zip -r ../dist.zip .
 
@@ -47,18 +41,18 @@ jobs:
     runs-on: ubuntu-latest
     environment: preprod
     steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v5
-        with:
-          name: dist
-          path: dist/
+      - name: Download release asset
+        run: |
+          gh release download "${{ github.ref_name }}" \
+            --pattern "dist.zip" --repo ${{ github.repository }}
+          unzip dist.zip -d dist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ vars.FTP_HOST }}
-          port: ${{ vars.FTP_PORT }}
-          username: ${{ vars.FTP_USER }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./dist/
-          server-dir: /
+        run: |
+          lftp -c "
+            open -u '${{ vars.FTP_USER }},${{ secrets.FTP_PASSWORD }}' \
+                 ftp://${{ vars.FTP_HOST }}:${{ vars.FTP_PORT }}
+            mirror --reverse --verbose dist/ /
+          "
