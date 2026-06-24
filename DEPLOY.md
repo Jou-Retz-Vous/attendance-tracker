@@ -69,5 +69,16 @@ installation sur un nouveau serveur, effectuer ces étapes manuellement :
    "
    ```
 3. Créer le dossier `cache/`
-4. Configurer l'accès HTTP Basic Auth pour `/www/admin/` (fichier `.htpasswd`)
+4. Créer le fichier `.htpasswd` pour protéger l'interface d'administration :
+   ```bash
+   # Créer le fichier avec un premier utilisateur
+   htpasswd -c /tmp/.htpasswd identifiant
+   # Ajouter d'autres utilisateurs si besoin (sans -c)
+   htpasswd /tmp/.htpasswd autre_identifiant
+   ```
+   Puis l'uploader à la racine FTP (hors webroot) :
+   ```bash
+   source .env
+   curl --upload-file /tmp/.htpasswd "${FTP_PREPROD%/}/.htpasswd"
+   ```
 5. Pousser un tag pour déclencher le premier déploiement automatique
