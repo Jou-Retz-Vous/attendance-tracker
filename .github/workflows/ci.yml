@@ -6,13 +6,17 @@ on:
   pull_request:
 
 jobs:
-  ci:
+  php-lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-
       - name: PHP lint
         run: find src public -name '*.php' | xargs -P4 php -l | grep -v 'No syntax errors' || true
+
+  npm:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
 
       - uses: actions/setup-node@v5
         with:
