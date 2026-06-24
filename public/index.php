@@ -147,13 +147,17 @@ if (!$currentUid && !empty($sessions)) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= htmlspecialchars($title) ?></title>
+  <title><?= htmlspecialchars($title) ?> — SPS</title>
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
 </head>
 <body class="bg-light py-4 px-3">
 <main class="card mx-auto" style="max-width:420px">
   <div class="card-body">
-    <h1 class="h4 mb-4"><?= htmlspecialchars($title) ?></h1>
+    <h1 class="h4 mb-4 d-flex align-items-center gap-2">
+      <img src="/assets/icon.svg" alt="" width="28" height="28">
+      <?= htmlspecialchars($title) ?>
+    </h1>
 
     <?php if ($feedback): ?>
     <div class="alert alert-<?= $feedback['type'] ?>" role="alert">

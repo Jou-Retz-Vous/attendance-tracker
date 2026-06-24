@@ -76,7 +76,8 @@ if ($sessionUid) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin — <?= htmlspecialchars($config['association_name']) ?></title>
+  <title>Admin — <?= htmlspecialchars($config['association_name']) ?> — SPS</title>
+  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
 </head>
 <body class="bg-light py-4 px-3">
@@ -86,7 +87,10 @@ if ($sessionUid) {
 
   <div class="card mb-3">
     <div class="card-body">
-      <h1 class="h4 mb-3">Administration — <?= htmlspecialchars($config['association_name']) ?></h1>
+      <h1 class="h4 mb-3 d-flex align-items-center gap-2">
+        <img src="/assets/icon.svg" alt="" width="28" height="28">
+        Administration — <?= htmlspecialchars($config['association_name']) ?>
+      </h1>
 
       <?php if ($feedback): ?>
       <div class="alert alert-<?= $feedback['type'] ?>" id="feedback" role="alert">
