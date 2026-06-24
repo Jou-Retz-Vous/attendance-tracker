@@ -49,6 +49,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Inject environment config
+        run: |
+          sed -i "s|%%HTPASSWD_PATH%%|${{ vars.HTPASSWD_PATH }}|" dist/www/admin/.htaccess
+
       - name: Deploy via FTP
         run: |
           find dist -type f | sort | while IFS= read -r f; do
