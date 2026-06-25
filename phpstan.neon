@@ -1,0 +1,8 @@
+parameters:
+    level: 5
+    paths:
+        - public
+        - src
+    excludePaths:
+        - public/assets
+    phpVersion: 80200

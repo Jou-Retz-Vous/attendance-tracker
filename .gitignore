@@ -2,6 +2,12 @@ config.php
 data/*.db
 cache/
 node_modules
+vendor
 .htpasswd
-public/assets/*.css
-public/assets/*.map
+public/assets/bootstrap.min.css
+public/assets/bootstrap.min.css.map
+public/assets/leaflet.min.css
+public/assets/leaflet.min.js
+public/assets/images/
+public/assets/app.js
+public/assets/admin.js

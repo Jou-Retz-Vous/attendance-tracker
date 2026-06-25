@@ -65,6 +65,16 @@ if (!$sessionUid) {
     }
 }
 
+$osmLink        = '';
+$currentVenueName = '';
+$c = $sessionCoords[$sessionUid] ?? ['lat' => null, 'lon' => null];
+if ($c['lat'] !== null) {
+    $osmLink = 'https://www.openstreetmap.org/?mlat=' . $c['lat'] . '&mlon=' . $c['lon']
+             . '#map=15/' . $c['lat'] . '/' . $c['lon'];
+    $loc = array_column($sessions, 'location', 'uid')[$sessionUid] ?? '';
+    $currentVenueName = trim(str_replace(['\\,', '\\\\'], [',', '\\'], explode('\\n', $loc)[0]));
+}
+
 // Checkins for selected session
 $checkins = [];
 if ($sessionUid) {
@@ -87,9 +97,11 @@ if ($sessionUid) {
   <title>Admin — <?= htmlspecialchars($config['association_name']) ?> — SPS</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/assets/leaflet.min.css">
 </head>
-<body class="bg-light py-4 px-3">
+<body class="bg-light py-4 px-3"
+  data-session-uid="<?= htmlspecialchars($sessionUid) ?>"
+  data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>">
 <main class="mx-auto" style="max-width:680px">
 
   <a href="/" class="btn btn-outline-secondary btn-sm mb-3">← Accueil</a>
@@ -122,9 +134,12 @@ if ($sessionUid) {
         <label for="session" class="form-label">Séance</label>
         <div class="d-flex gap-2 flex-wrap">
           <select name="session_uid" id="session" class="form-select">
-            <?php foreach ($sessions as $s): ?>
-            <?php $cnt = (int) ($counts[$s['uid']] ?? 0) ?>
+            <?php foreach ($sessions as $s):
+              $venue = trim(str_replace(['\\,', '\\\\'], [',', '\\'], explode('\\n', $s['location'])[0]));
+              $cnt   = (int) ($counts[$s['uid']] ?? 0);
+            ?>
             <option value="<?= htmlspecialchars($s['uid']) ?>"
+              data-location="<?= htmlspecialchars($venue) ?>"
               <?= $s['uid'] === $sessionUid ? 'selected' : '' ?>>
               <?= htmlspecialchars($s['label']) ?> (<?= $cnt ?>)
             </option>
@@ -132,6 +147,18 @@ if ($sessionUid) {
           </select>
           <button type="submit" class="btn btn-outline-secondary" id="btn-voir">Voir</button>
         </div>
+        <a id="session-location" class="d-none mt-1 small text-muted text-decoration-none d-block" href="#">
+          <span id="venue-name"></span>
+          <small id="map-notice" class="d-none d-block" style="font-size:.75em">
+            En cliquant, des données de localisation seront chargées depuis openstreetmap.org.
+          </small>
+        </a>
+        <?php if ($osmLink): ?>
+        <noscript>
+          <a href="<?= htmlspecialchars($osmLink) ?>" target="_blank" rel="noopener"
+            class="d-block mt-1 small text-muted">📍 <?= htmlspecialchars($currentVenueName) ?></a>
+        </noscript>
+        <?php endif ?>
         <div id="map" class="d-none rounded mt-2" style="height:220px"></div>
       </form>
     </div>
@@ -166,107 +193,7 @@ if ($sessionUid) {
 
 </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  let sessionUid  = <?= json_encode($sessionUid) ?>;
-
-  // ── Map ──────────────────────────────────────────────────────────────────
-  const sessionCoords = <?= json_encode($sessionCoords) ?>;
-  let map = null, marker = null;
-
-  function updateMap(uid) {
-    const coords = sessionCoords[uid];
-    const mapEl  = document.getElementById('map');
-    if (!coords || coords.lat == null) {
-      mapEl.classList.add('d-none');
-      return;
-    }
-    mapEl.classList.remove('d-none');
-    if (!map) {
-      map = L.map('map', { zoomControl: true, attributionControl: true });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
-      marker = L.marker([coords.lat, coords.lon]).addTo(map);
-      map.setView([coords.lat, coords.lon], 15);
-    } else {
-      marker.setLatLng([coords.lat, coords.lon]);
-      map.setView([coords.lat, coords.lon], 15);
-    }
-    map.invalidateSize();
-  }
-
-  updateMap(sessionUid);
-
-  function showFeedback(msg, type) {
-    const el = document.getElementById('feedback');
-    el.textContent = msg;
-    el.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-    setTimeout(() => el.classList.add('d-none'), 4000);
-  }
-
-  function renderCheckins(checkins) {
-    const tbody = document.getElementById('tbody');
-    tbody.innerHTML = '';
-    checkins.forEach(c => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${c.nickname}</td>
-        <td>${new Date(c.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })}</td>
-        <td class="text-end">
-          <form method="POST" action="/admin/" style="display:inline">
-            <input type="hidden" name="checkin_id" value="${c.id}">
-            <input type="hidden" name="session_uid" value="${sessionUid}">
-            <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
-          </form>
-        </td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  // Progressive enhancement
-  document.getElementById('btn-voir').classList.add('d-none');
-
-  // Session change — fetch checkins without reload
-  document.getElementById('session').addEventListener('change', ({ target }) => {
-    sessionUid = target.value;
-    history.pushState({ sessionUid }, '', `/admin/?session_uid=${encodeURIComponent(sessionUid)}`);
-    fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
-      .then(r => r.json())
-      .then(({ checkins = [] }) => renderCheckins(checkins));
-    updateMap(sessionUid);
-  });
-
-  window.addEventListener('popstate', ({ state }) => {
-    if (!state?.sessionUid) return;
-    sessionUid = state.sessionUid;
-    document.getElementById('session').value = sessionUid;
-    fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
-      .then(r => r.json())
-      .then(({ checkins = [] }) => renderCheckins(checkins));
-  });
-
-  // Delete — intercept form submit in tbody
-  document.getElementById('tbody').addEventListener('submit', async e => {
-    e.preventDefault();
-    if (!confirm('Supprimer cette entrée ?')) return;
-    const checkinId = e.target.querySelector('[name="checkin_id"]').value;
-    const res = await fetch('/api/admin/delete.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ checkin_id: checkinId }),
-    }).then(r => r.json());
-    if (res.ok) {
-      e.target.closest('tr').remove();
-      const sel = document.getElementById('session');
-      sel.options[sel.selectedIndex].text =
-        sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${Math.max(0, n - 1)})`)
-    } else {
-      showFeedback(res.error || 'Erreur.', 'error');
-    }
-  });
-
-</script>
+<script src="/assets/leaflet.min.js"></script>
+<script src="/assets/admin.js"></script>
 </body>
 </html>

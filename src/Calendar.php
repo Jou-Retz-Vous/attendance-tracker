@@ -38,7 +38,7 @@ class Calendar
 
         usort($sessions, fn($a, $b) => strcmp($b['start'], $a['start']));
 
-        return array_values(array_slice($sessions, 0, 10));
+        return array_slice($sessions, 0, 10);
     }
 
     /**

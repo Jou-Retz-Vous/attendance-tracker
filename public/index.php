@@ -148,6 +148,16 @@ if (!$currentUid && !empty($sessions)) {
     if ($upcoming) $currentUid = end($upcoming)['uid'];
 }
 
+$osmLink        = '';
+$currentVenueName = '';
+$c = $sessionCoords[$currentUid] ?? ['lat' => null, 'lon' => null];
+if ($c['lat'] !== null) {
+    $osmLink = 'https://www.openstreetmap.org/?mlat=' . $c['lat'] . '&mlon=' . $c['lon']
+             . '#map=15/' . $c['lat'] . '/' . $c['lon'];
+    $loc = array_column($sessions, 'location', 'uid')[$currentUid] ?? '';
+    $currentVenueName = trim(str_replace(['\\,', '\\\\'], [',', '\\'], explode('\\n', $loc)[0]));
+}
+
 ?>
 <!DOCTYPE html>
 <html lang="<?= $lang ?>">
@@ -157,9 +167,14 @@ if (!$currentUid && !empty($sessions)) {
   <title><?= htmlspecialchars($title) ?> — SPS</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/assets/leaflet.min.css">
 </head>
-<body class="bg-light py-4 px-3">
+<body class="bg-light py-4 px-3"
+  data-lang="<?= $lang ?>"
+  data-association-name="<?= htmlspecialchars($associationName) ?>"
+  data-checked-uids="<?= htmlspecialchars(json_encode($checkedUids), ENT_QUOTES) ?>"
+  data-saved-nickname="<?= htmlspecialchars(json_encode($savedNickname), ENT_QUOTES) ?>"
+  data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>">
 <main class="card mx-auto" style="max-width:420px">
   <div class="card-body">
     <h1 class="h4 mb-4 d-flex align-items-center gap-2">
@@ -177,13 +192,28 @@ if (!$currentUid && !empty($sessions)) {
       <div class="mb-3">
         <label for="session" class="form-label"><?= $t['session_label'] ?></label>
         <select id="session" name="session_uid" class="form-select" required>
-          <?php foreach ($sessions as $s): ?>
+          <?php foreach ($sessions as $s):
+            $venue = trim(str_replace(['\\,', '\\\\'], [',', '\\'], explode('\\n', $s['location'])[0]));
+          ?>
           <option value="<?= htmlspecialchars($s['uid']) ?>"
+            data-location="<?= htmlspecialchars($venue) ?>"
             <?= $s['uid'] === $currentUid ? 'selected' : '' ?>>
             <?= htmlspecialchars((in_array($s['uid'], $checkedUids) ? '✅ ' : '') . $s['label']) ?>
           </option>
           <?php endforeach ?>
         </select>
+        <a id="session-location" class="d-none mt-1 small text-muted text-decoration-none d-block" href="#">
+          <span id="venue-name"></span>
+          <small id="map-notice" class="d-none d-block" style="font-size:.75em">
+            En cliquant, des données de localisation seront chargées depuis openstreetmap.org.
+          </small>
+        </a>
+        <?php if ($osmLink): ?>
+        <noscript>
+          <a href="<?= htmlspecialchars($osmLink) ?>" target="_blank" rel="noopener"
+            class="d-block mt-1 small text-muted">📍 <?= htmlspecialchars($currentVenueName) ?></a>
+        </noscript>
+        <?php endif ?>
         <div id="map" class="d-none rounded mt-2" style="height:220px"></div>
       </div>
 
@@ -213,198 +243,7 @@ if (!$currentUid && !empty($sessions)) {
   </div>
 </main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-  // JS translations (mirrors PHP $i18n)
-  const translations = {
-    fr: {
-      title:           name => `Pointage ${name}`,
-      session_label:   'Séance',
-      nickname_label:  'Pseudonyme',
-      nickname_ph:     'Pseudo',
-      remember:        'Mémoriser mon pseudonyme',
-      btn_checkin:     'Pointer la présence',
-      btn_cancel:      'Annuler le pointage',
-      checked_in:      name => `Présence enregistrée pour ${name}.`,
-      cancelled:       name => `Pointage annulé pour ${name}.`,
-      fill_nickname:   'Entrez un pseudonyme.',
-      already:         'Déjà pointé pour cette séance.',
-      not_checked_in:  'Aucun pointage trouvé pour cette séance.',
-      err_generic:     'Une erreur est survenue.',
-    },
-    en: {
-      title:           name => `${'<?= $associationName ?>'} Attendance`,
-      session_label:   'Session',
-      nickname_label:  'Nickname',
-      nickname_ph:     'Nickname',
-      remember:        'Remember my nickname',
-      btn_checkin:     'Check in',
-      btn_cancel:      'Cancel check-in',
-      checked_in:      name => `Checked in: ${name}.`,
-      cancelled:       name => `Check-in cancelled for ${name}.`,
-      fill_nickname:   'Enter a nickname.',
-      already:         'Already checked in for this session.',
-      not_checked_in:  'No check-in found for this session.',
-      err_generic:     'An error occurred.',
-    },
-  };
-
-  const lang             = '<?= $lang ?>';
-  const t                = translations[lang] ?? translations.fr;
-  const checkedUids      = <?= json_encode($checkedUids) ?>;
-  const initialChecked   = [...checkedUids];
-  const savedNickname    = <?= json_encode($savedNickname) ?>;
-
-  function updateButtons(sessionUid) {
-    const checked = checkedUids.includes(sessionUid);
-    document.getElementById('btn-checkin').classList.toggle('d-none', checked);
-    document.getElementById('btn-cancel').classList.toggle('d-none', !checked);
-  }
-
-  updateButtons(document.getElementById('session').value);
-  document.getElementById('session').addEventListener('change', ({ target }) => updateButtons(target.value));
-
-  const post = (path, data) => fetch(path, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-  }).then(r => r.json());
-
-  function showFeedback(msg, type) {
-    let el = document.querySelector('.alert');
-    if (!el) {
-      el = document.createElement('div');
-      el.setAttribute('role', 'alert');
-      document.querySelector('.card-body').prepend(el);
-    }
-    el.textContent = msg;
-    el.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-    setTimeout(() => el.remove(), 4000);
-  }
-
-  // Cookie helpers
-  const COOKIE_NAME = 'jrv_nickname';
-  const getCookie   = () => document.cookie.split('; ').find(r => r.startsWith(COOKIE_NAME + '='))?.split('=')[1] ?? '';
-  const setCookie   = v  => document.cookie = `${COOKIE_NAME}=${encodeURIComponent(v)}; max-age=31536000; path=/; SameSite=Strict`;
-  const deleteCookie= () => document.cookie = `${COOKIE_NAME}=; max-age=0; path=/`;
-
-  function syncCheckedState(nickname) {
-    const uids = nickname === savedNickname ? initialChecked : [];
-    checkedUids.length = 0;
-    uids.forEach(u => checkedUids.push(u));
-    const sel = document.getElementById('session');
-    for (const opt of sel.options) {
-      const has    = opt.text.startsWith('✅ ');
-      const should = checkedUids.includes(opt.value);
-      if (has && !should) opt.text = opt.text.slice(2);
-      if (!has && should) opt.text = '✅ ' + opt.text;
-    }
-    updateButtons(sel.value);
-  }
-
-  // Sync checkbox + checked state with cookie value as user types
-  document.getElementById('nickname').addEventListener('input', ({ target }) => {
-    const val      = target.value.trim();
-    const checkbox = document.getElementById('remember');
-    const matches  = val === decodeURIComponent(getCookie());
-    if (checkbox.checked !== matches) checkbox.checked = matches;
-    syncCheckedState(val);
-  });
-
-  // Autocomplete
-  let timer;
-  document.getElementById('nickname').addEventListener('input', ({ target }) => {
-    clearTimeout(timer);
-    if (target.value.trim().length < 2) return;
-    timer = setTimeout(() => {
-      fetch(`/api/attendees.php?q=${encodeURIComponent(target.value.trim())}`)
-        .then(r => r.json())
-        .then(({ attendees = [] }) => {
-          const dl = document.getElementById('suggestions');
-          dl.innerHTML = '';
-          attendees.forEach(({ nickname }) => {
-            const opt = document.createElement('option');
-            opt.value = nickname;
-            dl.appendChild(opt);
-          });
-        });
-    }, 200);
-  });
-
-  // ── Map ──────────────────────────────────────────────────────────────────
-  const sessionCoords = <?= json_encode($sessionCoords) ?>;
-  let map = null, marker = null;
-
-  function updateMap(uid) {
-    const coords = sessionCoords[uid];
-    const mapEl  = document.getElementById('map');
-    if (!coords || coords.lat == null) {
-      mapEl.classList.add('d-none');
-      return;
-    }
-    mapEl.classList.remove('d-none');
-    if (!map) {
-      map = L.map('map', { zoomControl: true, attributionControl: true });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
-      marker = L.marker([coords.lat, coords.lon]).addTo(map);
-      map.setView([coords.lat, coords.lon], 15);
-    } else {
-      marker.setLatLng([coords.lat, coords.lon]);
-      map.setView([coords.lat, coords.lon], 15);
-    }
-    map.invalidateSize();
-  }
-
-  updateMap(document.getElementById('session').value);
-  document.getElementById('session').addEventListener('change', ({ target }) => updateMap(target.value));
-
-  // Intercept form submit — use fetch instead of full reload
-  document.getElementById('checkin-form').addEventListener('submit', async e => {
-    e.preventDefault();
-    const action     = e.submitter?.value ?? 'checkin';
-    const nickname   = document.getElementById('nickname').value.trim();
-    const sel        = document.getElementById('session');
-    const sessionUid = sel.value;
-
-    if (!nickname) { showFeedback(t.fill_nickname, 'error'); return; }
-
-    if (action === 'cancel') {
-      const res = await post('/api/cancel.php', { session_uid: sessionUid, nickname });
-      if (res.ok) {
-        showFeedback(t.cancelled(res.nickname), 'success');
-        const idx = checkedUids.indexOf(sessionUid);
-        if (idx !== -1) checkedUids.splice(idx, 1);
-        if (sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
-          sel.options[sel.selectedIndex].text = sel.options[sel.selectedIndex].text.slice(2);
-        }
-        updateButtons(sessionUid);
-      } else if (res.error?.includes('No check-in')) {
-        showFeedback(t.not_checked_in, 'error');
-      } else {
-        showFeedback(t.err_generic, 'error');
-      }
-      return;
-    }
-
-    const res = await post('/api/checkin.php', { session_uid: sessionUid, nickname });
-    if (res.ok) {
-      if (document.getElementById('remember').checked) setCookie(nickname); else deleteCookie();
-      showFeedback(t.checked_in(res.nickname), 'success');
-      document.getElementById('nickname').value = '';
-      checkedUids.push(sessionUid);
-      if (!sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
-        sel.options[sel.selectedIndex].text = '✅ ' + sel.options[sel.selectedIndex].text;
-      }
-      updateButtons(sessionUid);
-    } else if (res.error?.includes('Already')) {
-      showFeedback(t.already, 'error');
-    } else {
-      showFeedback(t.err_generic, 'error');
-    }
-  });
-</script>
+<script src="/assets/leaflet.min.js"></script>
+<script src="/assets/app.js"></script>
 </body>
 </html>

@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build:css": "sass build/bootstrap-custom.scss public/assets/bootstrap.min.css --style=compressed --load-path=node_modules --quiet"
+    "build:css": "sass assets/scss/bootstrap-custom.scss public/assets/bootstrap.min.css --style=compressed --load-path=node_modules --quiet",
+    "build:leaflet": "cp node_modules/leaflet/dist/leaflet.js public/assets/leaflet.min.js && cp node_modules/leaflet/dist/leaflet.css public/assets/leaflet.min.css && cp -r node_modules/leaflet/dist/images public/assets/images",
+    "build:js": "cp assets/js/app.js public/assets/app.js && cp assets/js/admin.js public/assets/admin.js",
+    "build": "npm run build:css && npm run build:leaflet && npm run build:js",
+    "lint": "eslint assets/js"
   },
   "repository": {
     "type": "git",
@@ -13,13 +17,17 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "bugs": {
     "url": "https://github.com/Jou-Retz-Vous/attendance-tracker/issues"
   },
   "homepage": "https://github.com/Jou-Retz-Vous/attendance-tracker#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "bootstrap": "^5.3.8",
+    "eslint": "^10.5.0",
+    "globals": "^17.7.0",
+    "leaflet": "^1.9.4",
     "sass": "^1.101.0"
   }
 }

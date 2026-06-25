@@ -17,8 +17,15 @@ jobs:
           node-version: lts/*
           cache: npm
 
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - run: composer install --no-interaction --prefer-dist
       - run: npm ci
-      - run: npm run build:css
+      - run: npm run lint
+      - run: php -d memory_limit=512M vendor/bin/phpstan analyse --no-progress
+      - run: npm run build
 
       - name: Prepare dist
         run: |

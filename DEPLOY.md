@@ -33,7 +33,9 @@ git push origin vX.Y.Z
         │
         ▼
  [release.yml]
- • npm ci + build:css
+ • npm ci + lint (ESLint)
+ • composer install + phpstan (analyse statique PHP)
+ • npm run build (Bootstrap, Leaflet, JS)
  • Prépare dist/ (public/ → www/, src/, .ovhconfig)
  • Crée une GitHub Release avec dist.zip en pièce jointe
         │
