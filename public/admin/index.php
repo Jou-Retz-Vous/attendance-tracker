@@ -207,6 +207,10 @@ if ($sessionUid) {
     </table>
   </div>
 
+  <div class="text-center mt-3">
+    <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
+  </div>
+
 </main>
 
 <?php if ($showMap): ?><script src="/assets/leaflet.min.js"></script><?php endif ?>
