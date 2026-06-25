@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../../src/helpers.php';
 require_once __DIR__ . '/../../src/Database.php';
 require_once __DIR__ . '/../../src/Calendar.php';
+require_once __DIR__ . '/../../src/Geocoder.php';
 
 $config = require __DIR__ . '/../../config.php';
 
@@ -38,6 +39,12 @@ try {
     $sessions = $calendar->getSessions($lang);
 } catch (RuntimeException) {
     $sessions = [];
+}
+
+$geocacheFile  = dirname($config['cache_path']) . '/geocode.json';
+$sessionCoords = [];
+foreach ($sessions as $s) {
+    $sessionCoords[$s['uid']] = geocode($s['location'] ?? '', $geocacheFile);
 }
 
 // Counts per session
@@ -80,6 +87,7 @@ if ($sessionUid) {
   <title>Admin — <?= htmlspecialchars($config['association_name']) ?> — SPS</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body class="bg-light py-4 px-3">
 <main class="mx-auto" style="max-width:680px">
@@ -124,6 +132,7 @@ if ($sessionUid) {
           </select>
           <button type="submit" class="btn btn-outline-secondary" id="btn-voir">Voir</button>
         </div>
+        <div id="map" class="d-none rounded mt-2" style="height:220px"></div>
       </form>
     </div>
   </div>
@@ -157,8 +166,38 @@ if ($sessionUid) {
 
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   let sessionUid  = <?= json_encode($sessionUid) ?>;
+
+  // ── Map ──────────────────────────────────────────────────────────────────
+  const sessionCoords = <?= json_encode($sessionCoords) ?>;
+  let map = null, marker = null;
+
+  function updateMap(uid) {
+    const coords = sessionCoords[uid];
+    const mapEl  = document.getElementById('map');
+    if (!coords || coords.lat == null) {
+      mapEl.classList.add('d-none');
+      return;
+    }
+    mapEl.classList.remove('d-none');
+    if (!map) {
+      map = L.map('map', { zoomControl: true, attributionControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      marker = L.marker([coords.lat, coords.lon]).addTo(map);
+      map.setView([coords.lat, coords.lon], 15);
+    } else {
+      marker.setLatLng([coords.lat, coords.lon]);
+      map.setView([coords.lat, coords.lon], 15);
+    }
+    map.invalidateSize();
+  }
+
+  updateMap(sessionUid);
 
   function showFeedback(msg, type) {
     const el = document.getElementById('feedback');
@@ -196,6 +235,7 @@ if ($sessionUid) {
     fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
       .then(r => r.json())
       .then(({ checkins = [] }) => renderCheckins(checkins));
+    updateMap(sessionUid);
   });
 
   window.addEventListener('popstate', ({ state }) => {

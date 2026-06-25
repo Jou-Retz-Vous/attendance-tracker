@@ -5,6 +5,7 @@ require_once __DIR__ . '/../src/helpers.php';
 require_once __DIR__ . '/../src/Database.php';
 require_once __DIR__ . '/../src/Calendar.php';
 require_once __DIR__ . '/../src/CheckinService.php';
+require_once __DIR__ . '/../src/Geocoder.php';
 
 $config = require __DIR__ . '/../config.php';
 
@@ -60,6 +61,12 @@ try {
     $sessions = $calendar->getSessions($lang);
 } catch (RuntimeException) {
     $sessions = [];
+}
+
+$geocacheFile  = dirname($config['cache_path']) . '/geocode.json';
+$sessionCoords = [];
+foreach ($sessions as $s) {
+    $sessionCoords[$s['uid']] = geocode($s['location'] ?? '', $geocacheFile);
 }
 
 $associationName = $config['association_name'];
@@ -150,6 +157,7 @@ if (!$currentUid && !empty($sessions)) {
   <title><?= htmlspecialchars($title) ?> — SPS</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 </head>
 <body class="bg-light py-4 px-3">
 <main class="card mx-auto" style="max-width:420px">
@@ -176,6 +184,7 @@ if (!$currentUid && !empty($sessions)) {
           </option>
           <?php endforeach ?>
         </select>
+        <div id="map" class="d-none rounded mt-2" style="height:220px"></div>
       </div>
 
       <div class="mb-3">
@@ -204,6 +213,7 @@ if (!$currentUid && !empty($sessions)) {
   </div>
 </main>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // JS translations (mirrors PHP $i18n)
   const translations = {
@@ -320,6 +330,36 @@ if (!$currentUid && !empty($sessions)) {
         });
     }, 200);
   });
+
+  // ── Map ──────────────────────────────────────────────────────────────────
+  const sessionCoords = <?= json_encode($sessionCoords) ?>;
+  let map = null, marker = null;
+
+  function updateMap(uid) {
+    const coords = sessionCoords[uid];
+    const mapEl  = document.getElementById('map');
+    if (!coords || coords.lat == null) {
+      mapEl.classList.add('d-none');
+      return;
+    }
+    mapEl.classList.remove('d-none');
+    if (!map) {
+      map = L.map('map', { zoomControl: true, attributionControl: true });
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19,
+      }).addTo(map);
+      marker = L.marker([coords.lat, coords.lon]).addTo(map);
+      map.setView([coords.lat, coords.lon], 15);
+    } else {
+      marker.setLatLng([coords.lat, coords.lon]);
+      map.setView([coords.lat, coords.lon], 15);
+    }
+    map.invalidateSize();
+  }
+
+  updateMap(document.getElementById('session').value);
+  document.getElementById('session').addEventListener('change', ({ target }) => updateMap(target.value));
 
   // Intercept form submit — use fetch instead of full reload
   document.getElementById('checkin-form').addEventListener('submit', async e => {
