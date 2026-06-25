@@ -63,7 +63,6 @@ try {
     $sessions = [];
 }
 
-$sponsorUrl   = $config['sponsor_url']   ?? null;
 $showLocation = $config['show_location'] ?? 'with_map';
 $showVenue    = $showLocation !== false;
 $showLink     = in_array($showLocation, ['only_link', 'with_map'], true);
@@ -254,9 +253,7 @@ if ($showLink) {
 
     <div class="text-center mt-3 d-flex justify-content-center align-items-center gap-3">
       <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
-      <?php if ($sponsorUrl): ?>
-      <a href="<?= htmlspecialchars($sponsorUrl) ?>" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir</a>
-      <?php endif ?>
+      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir</a>
     </div>
   </div>
 </main>

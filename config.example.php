@@ -3,11 +3,6 @@ return [
     // Nom de l'association affiché dans l'interface et les exports.
     'association_name' => 'My Association',
 
-    // Optionnel — URL de la page de don/sponsoring affichée sur la page de pointage.
-    // Supprimer la clé ou mettre null pour masquer le lien.
-    // ex : 'https://github.com/sponsors/votre-compte'
-    // 'sponsor_url' => null,
-
     // DSN PDO de la base de données.
     // SQLite : 'sqlite:' . __DIR__ . '/data/attendance.db'
     //   → chemin absolu recommandé pour éviter les ambiguïtés selon le répertoire courant.
