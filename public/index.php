@@ -253,7 +253,8 @@ if ($showLink) {
 
     <div class="text-center mt-3 d-flex justify-content-center align-items-center gap-3">
       <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
-      <span class="text-secondary small">© <?= date('Y') ?> <?= htmlspecialchars($associationName) ?></span>
+      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener"
+         class="text-secondary small">© <?= date('Y') ?> holyhope</a>
     </div>
   </div>
 </main>

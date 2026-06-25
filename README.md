@@ -18,7 +18,7 @@ quel navigateur.
   passage.
 - **Page d'administration** — liste des présences par séance, suppression
   d'entrées, compteurs.
-- **Export** — CSV, JSON ou [Grist](https://www.getgrist.com/) pour analyser
+- **Export** — CSV ou [Grist](https://www.getgrist.com/) pour analyser
   les données dans votre outil préféré.
 - **Synchronisation avec Google Calendar** — les séances sont importées
   automatiquement depuis un agenda public.
@@ -85,12 +85,9 @@ Pour le déploiement automatisé via GitHub Actions, voir [DEPLOY.md](DEPLOY.md)
 
 ## Protéger la page d'administration
 
-L'accès à `/admin/` est protégé par HTTP Basic Auth. Créer un fichier
-`.htpasswd` :
-
-```bash
-htpasswd -c public/admin/.htpasswd votre_identifiant
-```
+L'accès à `/admin/` est protégé par HTTP Basic Auth via un fichier `.htpasswd`
+placé **hors du webroot** (à la racine FTP, pas dans `public/`). Voir
+[DEPLOY.md](DEPLOY.md) pour la procédure complète.
 
 ## Récupérer l'URL de votre agenda Google Calendar
 
@@ -100,4 +97,7 @@ htpasswd -c public/admin/.htpasswd votre_identifiant
 
 ## Licence
 
-MIT
+[MPL 2.0](LICENSE) avec conditions supplémentaires d'attribution UI :
+tout déploiement doit afficher le copyright `© holyhope` et un lien vers
+[github.com/sponsors/holyhope](https://github.com/sponsors/holyhope) de
+manière visible pour les utilisateurs finaux.
