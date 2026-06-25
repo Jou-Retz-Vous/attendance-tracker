@@ -13,42 +13,8 @@ $config = require __DIR__ . '/../config.php';
 preg_match('/^([a-z]{2})/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fr', $m);
 $lang = in_array(strtolower($m[1] ?? 'fr'), ['en']) ? 'en' : 'fr';
 
-$i18n = [
-    'fr' => [
-        'title'           => fn($n) => "Pointage $n",
-        'session_label'   => 'Séance',
-        'nickname_label'  => 'Pseudonyme',
-        'nickname_ph'     => 'Pseudo',
-        'remember'        => 'Mémoriser mon pseudonyme',
-        'btn_checkin'     => 'Pointer la présence',
-        'btn_cancel'      => 'Annuler le pointage',
-        'checked_in'      => fn($n) => "Présence enregistrée pour $n.",
-        'cancelled'       => fn($n) => "Pointage annulé pour $n.",
-        'fill_nickname'   => 'Entrez un pseudonyme.',
-        'already'         => 'Déjà pointé pour cette séance.',
-        'not_checked_in'  => 'Aucun pointage trouvé pour cette séance.',
-        'err_generic'     => 'Une erreur est survenue.',
-        'admin_link'      => 'Administration',
-    ],
-    'en' => [
-        'title'           => fn($n) => "$n Attendance",
-        'session_label'   => 'Session',
-        'nickname_label'  => 'Nickname',
-        'nickname_ph'     => 'Nickname',
-        'remember'        => 'Remember my nickname',
-        'btn_checkin'     => 'Check in',
-        'btn_cancel'      => 'Cancel check-in',
-        'checked_in'      => fn($n) => "Checked in: $n.",
-        'cancelled'       => fn($n) => "Check-in cancelled for $n.",
-        'fill_nickname'   => 'Enter a nickname.',
-        'already'         => 'Already checked in for this session.',
-        'not_checked_in'  => 'No check-in found for this session.',
-        'err_generic'     => 'An error occurred.',
-        'admin_link'      => 'Administration',
-    ],
-];
-
-$t = $i18n[$lang];
+/** @var array<string, string> $t */
+$t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
 // Load sessions server-side
 $calendar = new Calendar(
@@ -77,7 +43,7 @@ if ($showLink) {
 }
 
 $associationName = $config['association_name'];
-$title           = ($t['title'])($associationName);
+$title           = str_replace('{name}', $associationName, $t['title']);
 
 const COOKIE_NAME = 'jrv_nickname';
 const COOKIE_TTL  = 60 * 60 * 24 * 365; // 1 year
@@ -125,11 +91,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Feedback from PRG redirect
 if (isset($_GET['checkin']) && $_GET['checkin'] === 'ok') {
     $name     = htmlspecialchars($_GET['name'] ?? '', ENT_QUOTES);
-    $feedback = ['type' => 'success', 'msg' => ($t['checked_in'])($name)];
+    $feedback = ['type' => 'success', 'msg' => str_replace('{name}', $name, $t['checked_in'])];
 }
 if (isset($_GET['cancel']) && $_GET['cancel'] === 'ok') {
     $name     = htmlspecialchars($_GET['name'] ?? '', ENT_QUOTES);
-    $feedback = ['type' => 'success', 'msg' => ($t['cancelled'])($name)];
+    $feedback = ['type' => 'success', 'msg' => str_replace('{name}', $name, $t['cancelled'])];
 }
 
 // Sessions already checked in by the current user
@@ -184,7 +150,8 @@ if ($showLink) {
   data-checked-uids="<?= htmlspecialchars(json_encode($checkedUids), ENT_QUOTES) ?>"
   data-saved-nickname="<?= htmlspecialchars(json_encode($savedNickname), ENT_QUOTES) ?>"
   data-show-location="<?= htmlspecialchars(json_encode($showLocation)) ?>"
-  data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>">
+  data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>"
+  data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
 <main class="card mx-auto" style="max-width:420px">
   <div class="card-body">
     <h1 class="h4 mb-4 d-flex align-items-center gap-2">
@@ -217,7 +184,7 @@ if ($showLink) {
           <span id="venue-name"></span>
           <?php if ($showMap): ?>
           <small id="map-notice" class="d-none d-block" style="font-size:.75em">
-            En cliquant, des données de localisation seront chargées depuis openstreetmap.org.
+            <?= htmlspecialchars($t['map_notice']) ?>
           </small>
           <?php endif ?>
         <?= $showLink ? '</a>' : '</span>' ?>

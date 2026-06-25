@@ -1,4 +1,6 @@
 const body          = document.body;
+const lang          = body.dataset.lang || 'fr';
+const t             = JSON.parse(body.dataset.i18n || '{}');
 let sessionUid      = body.dataset.sessionUid || '';
 const sessionCoords = JSON.parse(body.dataset.sessionCoords || '{}');
 const showLocation = JSON.parse(body.dataset.showLocation || '"with_map"');
@@ -82,7 +84,7 @@ function renderCheckins(checkins) {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
   checkins.forEach(c => {
-    const date = new Date(c.created_at).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const date = new Date(c.created_at).toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
     const form = document.createElement('form');
     form.method = 'POST';
@@ -90,7 +92,7 @@ function renderCheckins(checkins) {
     form.style.display = 'inline';
     const inId  = document.createElement('input'); inId.type  = 'hidden'; inId.name  = 'checkin_id';  inId.value = c.id;
     const inSid = document.createElement('input'); inSid.type = 'hidden'; inSid.name = 'session_uid'; inSid.value = sessionUid;
-    const btn   = document.createElement('button'); btn.type = 'submit'; btn.className = 'btn btn-outline-danger btn-sm'; btn.textContent = 'Supprimer';
+    const btn   = document.createElement('button'); btn.type = 'submit'; btn.className = 'btn btn-outline-danger btn-sm'; btn.textContent = t.delete || 'Supprimer';
     form.append(inId, inSid, btn);
 
     const tr = document.createElement('tr');
@@ -125,7 +127,7 @@ window.addEventListener('popstate', ({ state }) => {
 
 document.getElementById('tbody').addEventListener('submit', async e => {
   e.preventDefault();
-  if (!confirm('Supprimer cette entrée ?')) return;
+  if (!confirm(t.delete_confirm || 'Supprimer cette entrée ?')) return;
   const checkinId = e.target.querySelector('[name="checkin_id"]').value;
   const res = await fetch('/api/admin/delete.php', {
     method: 'POST',
@@ -138,6 +140,6 @@ document.getElementById('tbody').addEventListener('submit', async e => {
     sel.options[sel.selectedIndex].text =
       sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${Math.max(0, n - 1)})`);
   } else {
-    showFeedback(res.error || 'Erreur.', 'error');
+    showFeedback(res.error || t.err_generic || 'Erreur.', 'error');
   }
 });

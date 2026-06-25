@@ -1,49 +1,15 @@
-const body             = document.body;
-const lang             = body.dataset.lang || 'fr';
-const checkedUids      = JSON.parse(body.dataset.checkedUids || '[]');
-const initialChecked   = [...checkedUids];
-const savedNickname    = JSON.parse(body.dataset.savedNickname || '""');
-const sessionCoords    = JSON.parse(body.dataset.sessionCoords || '{}');
-const associationName  = body.dataset.associationName || '';
-const showLocation = JSON.parse(body.dataset.showLocation || '"with_map"');
-const showVenue    = showLocation !== false;
-const showLink     = showLocation === 'only_link' || showLocation === 'with_map';
-const showMap      = showLocation === 'with_map';
+const body           = document.body;
+const checkedUids    = JSON.parse(body.dataset.checkedUids || '[]');
+const initialChecked = [...checkedUids];
+const savedNickname  = JSON.parse(body.dataset.savedNickname || '""');
+const sessionCoords  = JSON.parse(body.dataset.sessionCoords || '{}');
+const showLocation   = JSON.parse(body.dataset.showLocation || '"with_map"');
+const showVenue      = showLocation !== false;
+const showLink       = showLocation === 'only_link' || showLocation === 'with_map';
+const showMap        = showLocation === 'with_map';
 
-const translations = {
-  fr: {
-    title:          name => `Pointage ${name}`,
-    session_label:  'Séance',
-    nickname_label: 'Pseudonyme',
-    nickname_ph:    'Pseudo',
-    remember:       'Mémoriser mon pseudonyme',
-    btn_checkin:    'Pointer la présence',
-    btn_cancel:     'Annuler le pointage',
-    checked_in:     name => `Présence enregistrée pour ${name}.`,
-    cancelled:      name => `Pointage annulé pour ${name}.`,
-    fill_nickname:  'Entrez un pseudonyme.',
-    already:        'Déjà pointé pour cette séance.',
-    not_checked_in: 'Aucun pointage trouvé pour cette séance.',
-    err_generic:    'Une erreur est survenue.',
-  },
-  en: {
-    title:          name => `${associationName} ${name} Attendance`,
-    session_label:  'Session',
-    nickname_label: 'Nickname',
-    nickname_ph:    'Nickname',
-    remember:       'Remember my nickname',
-    btn_checkin:    'Check in',
-    btn_cancel:     'Cancel check-in',
-    checked_in:     name => `Checked in: ${name}.`,
-    cancelled:      name => `Check-in cancelled for ${name}.`,
-    fill_nickname:  'Enter a nickname.',
-    already:        'Already checked in for this session.',
-    not_checked_in: 'No check-in found for this session.',
-    err_generic:    'An error occurred.',
-  },
-};
-
-const t          = translations[lang] ?? translations.fr;
+const t = JSON.parse(body.dataset.i18n || '{}');
+const interp = (tpl, name) => tpl.replace('{name}', name);
 const sessionSel = document.getElementById('session');
 
 function updateButtons(sessionUid) {
@@ -198,7 +164,7 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
   if (action === 'cancel') {
     const res = await post('/api/cancel.php', { session_uid: sessionUid, nickname });
     if (res.ok) {
-      showFeedback(t.cancelled(res.nickname), 'success');
+      showFeedback(interp(t.cancelled, res.nickname), 'success');
       const idx = checkedUids.indexOf(sessionUid);
       if (idx !== -1) checkedUids.splice(idx, 1);
       if (sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
@@ -216,7 +182,7 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
   const res = await post('/api/checkin.php', { session_uid: sessionUid, nickname });
   if (res.ok) {
     if (document.getElementById('remember').checked) setCookie(nickname); else deleteCookie();
-    showFeedback(t.checked_in(res.nickname), 'success');
+    showFeedback(interp(t.checked_in, res.nickname), 'success');
     document.getElementById('nickname').value = '';
     checkedUids.push(sessionUid);
     if (!sel.options[sel.selectedIndex].text.startsWith('✅ ')) {

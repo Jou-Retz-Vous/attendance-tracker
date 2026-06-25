@@ -11,6 +11,9 @@ $config = require __DIR__ . '/../../config.php';
 preg_match('/^([a-z]{2})/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fr', $m);
 $lang = in_array(strtolower($m[1] ?? 'fr'), ['en']) ? 'en' : 'fr';
 
+/** @var array<string, string> $t */
+$t = require __DIR__ . '/../../lang/' . $lang . '.php';
+
 // Handle delete (POST + PRG)
 $feedback = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -27,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['deleted'])) {
-    $feedback = ['type' => 'success', 'msg' => 'Entrée supprimée.'];
+    $feedback = ['type' => 'success', 'msg' => $t['deleted']];
 }
 
 // Load sessions
@@ -112,25 +115,27 @@ if ($sessionUid) {
 </head>
 <body class="bg-light py-4 px-3"
   data-session-uid="<?= htmlspecialchars($sessionUid) ?>"
+  data-lang="<?= $lang ?>"
   data-show-location="<?= htmlspecialchars(json_encode($showLocation)) ?>"
-  data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>">
+  data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>"
+  data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
 <main class="mx-auto" style="max-width:680px">
 
-  <a href="/" class="btn btn-outline-secondary btn-sm mb-3">← Accueil</a>
+  <a href="/" class="btn btn-outline-secondary btn-sm mb-3"><?= htmlspecialchars($t['back_home']) ?></a>
 
   <div class="card mb-3">
     <div class="card-body">
       <div class="d-flex align-items-center gap-2 mb-3">
         <h1 class="h4 mb-0 d-flex align-items-center gap-2">
           <img src="/assets/icon.svg" alt="" width="28" height="28">
-          Administration — <?= htmlspecialchars($config['association_name']) ?>
+          <?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?>
         </h1>
         <form method="GET" action="/api/admin/checkins.php" class="d-flex gap-1 ms-auto">
           <select name="format" class="form-select form-select-sm" style="width:auto">
             <option value="grist">Grist</option>
             <option value="csv">CSV</option>
           </select>
-          <button type="submit" class="btn btn-outline-secondary btn-sm">Exporter</button>
+          <button type="submit" class="btn btn-outline-secondary btn-sm"><?= htmlspecialchars($t['export']) ?></button>
         </form>
       </div>
 
@@ -143,7 +148,7 @@ if ($sessionUid) {
       <?php endif ?>
 
       <form method="GET" action="/admin/" id="session-form">
-        <label for="session" class="form-label">Séance</label>
+        <label for="session" class="form-label"><?= htmlspecialchars($t['session_label']) ?></label>
         <div class="d-flex gap-2 flex-wrap">
           <select name="session_uid" id="session" class="form-select">
             <?php foreach ($sessions as $s):
@@ -157,14 +162,14 @@ if ($sessionUid) {
             </option>
             <?php endforeach ?>
           </select>
-          <button type="submit" class="btn btn-outline-secondary" id="btn-voir">Voir</button>
+          <button type="submit" class="btn btn-outline-secondary" id="btn-voir"><?= htmlspecialchars($t['view']) ?></button>
         </div>
         <?php if ($showVenue): ?>
         <?= $showLink ? '<a' : '<span' ?> id="session-location" class="d-none mt-1 small text-muted text-decoration-none d-block"<?= $showLink ? ' href="#"' : '' ?>>
           <span id="venue-name"></span>
           <?php if ($showMap): ?>
           <small id="map-notice" class="d-none d-block" style="font-size:.75em">
-            En cliquant, des données de localisation seront chargées depuis openstreetmap.org.
+            <?= htmlspecialchars($t['map_notice']) ?>
           </small>
           <?php endif ?>
         <?= $showLink ? '</a>' : '</span>' ?>
@@ -184,8 +189,8 @@ if ($sessionUid) {
     <table class="table table-hover mb-0">
       <thead class="table-light">
         <tr>
-          <th>Pseudonyme</th>
-          <th>Date</th>
+          <th><?= htmlspecialchars($t['nickname_col']) ?></th>
+          <th><?= htmlspecialchars($t['date_col']) ?></th>
           <th></th>
         </tr>
       </thead>
@@ -198,7 +203,7 @@ if ($sessionUid) {
             <form method="POST" action="/admin/" style="display:inline">
               <input type="hidden" name="checkin_id" value="<?= htmlspecialchars($c['id']) ?>">
               <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
-              <button type="submit" class="btn btn-outline-danger btn-sm">Supprimer</button>
+              <button type="submit" class="btn btn-outline-danger btn-sm"><?= htmlspecialchars($t['delete']) ?></button>
             </form>
           </td>
         </tr>

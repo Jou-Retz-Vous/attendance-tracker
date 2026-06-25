@@ -32,6 +32,7 @@ jobs:
           mkdir -p dist
           cp -r public dist/www
           cp -r src dist/src
+          cp -r lang dist/lang
           cp .ovhconfig dist/.ovhconfig
 
       - name: Zip dist
