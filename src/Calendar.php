@@ -16,8 +16,8 @@ class Calendar
         $ics       = $this->fetchIcs();
         $events    = $this->parseIcs($ics);
         $now       = new DateTimeImmutable();
-        $past      = $now->modify('-30 days');
-        $endOfDay  = $now->setTime(23, 59, 59);
+        $past      = $now->modify('-30 days');  // allow late check-ins for recent sessions
+        $endOfDay  = $now->setTime(23, 59, 59); // exclude future sessions (today's ongoing session included)
 
         $sessions = [];
         foreach ($events as $e) {
@@ -171,6 +171,8 @@ class Calendar
             return $ics;
         }
 
+        // Serve stale cache rather than a hard failure — a temporary network error
+        // should not prevent participants from checking in during a session.
         if (file_exists($this->cachePath)) {
             return file_get_contents($this->cachePath);
         }

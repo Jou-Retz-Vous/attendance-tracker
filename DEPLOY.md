@@ -22,7 +22,7 @@ directement sur le serveur (via FTP ou panneau OVH) :
 
 | Fichier | Rôle |
 |---------|------|
-| `config.php` | Configuration (URL calendrier, token admin, DSN base de données) |
+| `config.php` | Configuration (URL calendrier, DSN base de données, options d'affichage) |
 | `data/attendance.db` | Base SQLite (persistance des pointages) |
 | `cache/` | Cache du flux iCal (peuplé au runtime) |
 

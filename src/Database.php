@@ -14,7 +14,10 @@ class Database
             $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC);
             if (str_starts_with($dsn, 'sqlite:')) {
+                // WAL allows concurrent reads during a write — avoids lock contention
+                // when multiple participants check in simultaneously at session start.
                 $pdo->exec('PRAGMA journal_mode=WAL');
+                // Foreign key enforcement is off by default in SQLite.
                 $pdo->exec('PRAGMA foreign_keys=ON');
             }
             self::migrate($pdo);
