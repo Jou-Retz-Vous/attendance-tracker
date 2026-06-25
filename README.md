@@ -40,7 +40,7 @@ fichier SQLite.
 ### 1. Cloner le dépôt
 
 ```bash
-git clone https://github.com/Jou-Retz-Vous/attendance-tracker.git
+git clone https://github.com/holyhope/attendance-tracker.git
 cd attendance-tracker
 ```
 
@@ -50,44 +50,64 @@ cd attendance-tracker
 cp config.example.php config.php
 ```
 
-Éditer `config.php` et renseigner :
+Éditer `config.php` et renseigner au minimum :
 
 | Clé | Description |
 |-----|-------------|
-| `association_name` | Nom affiché dans l'interface |
-| `calendar_url` | URL iCal de l'agenda Google Calendar |
+| `association_name` | Nom affiché dans l'interface et les exports |
+| `calendar_url` | URL iCal de l'agenda (Google Calendar, Nextcloud, etc.) |
 | `db_dsn` | Chemin vers la base SQLite (ex. `sqlite:/var/www/data/attendance.db`) |
 
-Voir `config.example.php` pour toutes les options (format des libellés, filtre
-des événements…).
+`config.example.php` documente toutes les options avancées : format des
+libellés de séance (`session_label_format`), affichage du lieu (`show_location`
+: `false`, `true`, `'only_link'`, `'with_map'`), filtre des événements
+(`event_filter`) et durée de cache iCal (`cache_ttl`).
 
 ### 3. Initialiser la base de données
 
+La base est **auto-migrée au premier démarrage** : les tables sont créées
+automatiquement si elles n'existent pas. Il suffit de créer le dossier `data/`
+accessible en écriture par PHP :
+
 ```bash
-sqlite3 data/attendance.db "
-  CREATE TABLE attendees (id TEXT PRIMARY KEY, nickname TEXT NOT NULL UNIQUE);
-  CREATE TABLE checkins (
-    id TEXT PRIMARY KEY, session_uid TEXT NOT NULL,
-    attendee_id TEXT NOT NULL REFERENCES attendees(id),
-    created_at TIMESTAMP NOT NULL
-  );
-  CREATE UNIQUE INDEX uq_checkin ON checkins (session_uid, attendee_id);
-"
+mkdir -p data cache
 ```
 
 ### 4. Déployer
 
-Déposer les dossiers `public/`, `src/` et les fichiers `config.php`,
+Déposer les dossiers `public/`, `src/`, `lang/` et les fichiers `config.php`,
 `.ovhconfig` à la racine de votre hébergement. Le dossier `public/` doit être
 configuré comme racine web (ou son contenu copié dans `www/`).
 
 Pour le déploiement automatisé via GitHub Actions, voir [DEPLOY.md](DEPLOY.md).
+
+## Ajouter une langue
+
+1. Créer `lang/{code}.php` en copiant `lang/fr.php` comme modèle.
+2. Traduire toutes les valeurs (les clés restent en anglais).
+3. Ajouter le code dans le tableau `$supportedLangs` de `public/index.php`
+   et `public/admin/index.php` :
+   ```php
+   $supportedLangs = ['fr', 'en', 'de'];
+   ```
+
+La langue est détectée automatiquement depuis l'en-tête `Accept-Language` du
+navigateur. Les tokens `{name}` dans les traductions sont compatibles PHP et JS.
 
 ## Protéger la page d'administration
 
 L'accès à `/admin/` est protégé par HTTP Basic Auth via un fichier `.htpasswd`
 placé **hors du webroot** (à la racine FTP, pas dans `public/`). Voir
 [DEPLOY.md](DEPLOY.md) pour la procédure complète.
+
+## Exporter les données
+
+Depuis la page d'administration, le menu **Exporter** permet de télécharger :
+
+- **CSV** — tableau simple, ouvrable dans Excel, LibreOffice Calc ou Google
+  Sheets.
+- **Grist** — document [Grist](https://www.getgrist.com/) avec tables liées
+  (séances, participants, présences) et géocodage des lieux.
 
 ## Récupérer l'URL de votre agenda Google Calendar
 

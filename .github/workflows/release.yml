@@ -1,5 +1,9 @@
 name: Release & Deploy preprod
 
+# Required in environment "preprod" (Settings → Environments → preprod):
+#   Variables: FTP_HOST, FTP_PORT, FTP_USER, ASSOCIATION_NAME
+#   Secrets:   FTP_PASSWORD, CALENDAR_URL
+
 on:
   push:
     tags: ['v*']
@@ -69,7 +73,7 @@ jobs:
               'db_dsn'               => 'sqlite:' . __DIR__ . '/data/attendance.db',
               'cache_path'           => __DIR__ . '/cache/agenda.ics.cache',
               'calendar_url'         => '${{ secrets.CALENDAR_URL }}',
-              'session_label_format' => '{date} — {title}',
+              'session_label_format' => '{date}',
               'show_location'        => 'with_map',
           ];
           PHP

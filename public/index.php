@@ -9,9 +9,20 @@ require_once __DIR__ . '/../src/Geocoder.php';
 
 $config = require __DIR__ . '/../config.php';
 
-// Server-side i18n from Accept-Language header
-preg_match('/^([a-z]{2})/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fr', $m);
-$lang = in_array(strtolower($m[1] ?? 'fr'), ['en']) ? 'en' : 'fr';
+// Language resolution: explicit choice (?lang=) > cookie > Accept-Language > 'fr'
+// To add a language: create lang/{code}.php and add the code to $supportedLangs.
+$supportedLangs = ['fr', 'en'];
+if (isset($_GET['lang']) && in_array($_GET['lang'], $supportedLangs, true)) {
+    $lang = $_GET['lang'];
+    setcookie('jrv_lang', $lang, ['expires' => time() + 60 * 60 * 24 * 365, 'path' => '/', 'secure' => true, 'httponly' => true, 'samesite' => 'Strict']);
+} elseif (isset($_COOKIE['jrv_lang']) && in_array($_COOKIE['jrv_lang'], $supportedLangs, true)) {
+    $lang = $_COOKIE['jrv_lang'];
+} else {
+    preg_match('/^([a-z]{2})/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fr', $m);
+    $lang = in_array(strtolower($m[1] ?? 'fr'), $supportedLangs, true) ? strtolower($m[1]) : 'fr';
+}
+$langUrlFor = fn(string $code): string => '?' . http_build_query(['lang' => $code]);
+$langFlag   = ['fr' => '🇫🇷', 'en' => '🇬🇧'];
 
 /** @var array<string, string> $t */
 $t = require __DIR__ . '/../lang/' . $lang . '.php';
@@ -144,7 +155,7 @@ if ($showLink) {
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
   <?php if ($showMap): ?><link rel="stylesheet" href="/assets/leaflet.min.css"><?php endif ?>
 </head>
-<body class="bg-light py-4 px-3"
+<body class="bg-light d-flex flex-column min-vh-100"
   data-lang="<?= $lang ?>"
   data-association-name="<?= htmlspecialchars($associationName) ?>"
   data-checked-uids="<?= htmlspecialchars(json_encode($checkedUids), ENT_QUOTES) ?>"
@@ -152,13 +163,15 @@ if ($showLink) {
   data-show-location="<?= htmlspecialchars(json_encode($showLocation)) ?>"
   data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>"
   data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
-<main class="card mx-auto" style="max-width:420px">
+<header class="border-bottom bg-white py-2 px-3">
+  <div class="d-flex align-items-center gap-2">
+    <img src="/assets/icon.svg" alt="" width="24" height="24">
+    <span class="fw-semibold"><?= htmlspecialchars($title) ?></span>
+  </div>
+</header>
+<main class="flex-grow-1 py-4 px-3 d-flex justify-content-center align-items-start">
+<div class="card w-100" style="max-width:420px">
   <div class="card-body">
-    <h1 class="h4 mb-4 d-flex align-items-center gap-2">
-      <img src="/assets/icon.svg" alt="" width="28" height="28">
-      <?= htmlspecialchars($title) ?>
-    </h1>
-
     <?php if ($feedback): ?>
     <div class="alert alert-<?= $feedback['type'] ?>" role="alert">
       <?= $feedback['msg'] ?>
@@ -218,15 +231,25 @@ if ($showLink) {
       </div>
     </form>
 
-    <div class="text-center mt-3 d-flex justify-content-center align-items-center gap-3">
-      <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
-    </div>
   </div>
+</div>
 </main>
 
-<div class="text-center mt-3">
-  <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">© <?= date('Y') ?> holyhope</a>
-</div>
+<footer class="border-top bg-white py-2 px-3">
+  <div class="d-flex justify-content-center align-items-center gap-3">
+    <span>
+      <?php foreach ($supportedLangs as $code): ?>
+        <?php if ($code === $lang): ?>
+          <span title="<?= strtoupper($code) ?>" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
+        <?php else: ?>
+          <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" title="<?= strtoupper($code) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
+        <?php endif ?>
+      <?php endforeach ?>
+    </span>
+    <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
+    <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">© <?= date('Y') ?> holyhope</a>
+  </div>
+</footer>
 
 <?php if ($showMap): ?><script src="/assets/leaflet.min.js"></script><?php endif ?>
 <script src="/assets/app.js"></script>
