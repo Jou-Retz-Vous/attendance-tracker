@@ -7,7 +7,8 @@ require_once __DIR__ . '/../src/Calendar.php';
 require_once __DIR__ . '/../src/CheckinService.php';
 require_once __DIR__ . '/../src/Geocoder.php';
 
-$config = require __DIR__ . '/../config.php';
+$config  = require __DIR__ . '/../config.php';
+$version = is_file(__DIR__ . '/../version.php') ? require __DIR__ . '/../version.php' : null;
 
 // Language resolution: explicit choice (?lang=) > cookie > Accept-Language > 'fr'
 // To add a language: create lang/{code}.php and add the code to $supportedLangs.
@@ -248,6 +249,7 @@ if ($showLink) {
     </span>
     <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
     <a href="https://github.com/holyhope/attendance-tracker?tab=License-1-ov-file" target="_blank" rel="noopener" class="text-secondary small">© <?= date('Y') ?> holyhope</a>
+    <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
   </div>
 </footer>
 

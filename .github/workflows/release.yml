@@ -38,6 +38,7 @@ jobs:
           cp -r src dist/src
           cp -r lang dist/lang
           cp .ovhconfig dist/.ovhconfig
+          echo "<?php return '${GITHUB_REF_NAME}';" > dist/version.php
 
       - name: Zip dist
         run: cd dist && zip -r ../dist.zip .

@@ -6,7 +6,8 @@ require_once __DIR__ . '/../../src/Database.php';
 require_once __DIR__ . '/../../src/Calendar.php';
 require_once __DIR__ . '/../../src/Geocoder.php';
 
-$config = require __DIR__ . '/../../config.php';
+$config  = require __DIR__ . '/../../config.php';
+$version = is_file(__DIR__ . '/../../version.php') ? require __DIR__ . '/../../version.php' : null;
 
 // Language resolution: explicit choice (?lang=) > cookie > Accept-Language > 'fr'
 // To add a language: create lang/{code}.php and add the code to $supportedLangs.
@@ -28,6 +29,19 @@ $langFlag = ['fr' => '🇫🇷', 'en' => '🇬🇧'];
 
 /** @var array<string, string> $t */
 $t = require __DIR__ . '/../../lang/' . $lang . '.php';
+
+// Disk usage
+$fmtBytes = function(int|false $bytes): string {
+    if ($bytes === false) return '?';
+    foreach (['o', 'Ko', 'Mo', 'Go'] as $unit) {
+        if ($bytes < 1024) return round($bytes) . ' ' . $unit;
+        $bytes /= 1024;
+    }
+    return round($bytes) . ' To';
+};
+$dbPath        = dirname($config['db_dsn'] === '' ? '' : str_replace('sqlite:', '', $config['db_dsn']));
+$dbSize        = file_exists(str_replace('sqlite:', '', $config['db_dsn'])) ? filesize(str_replace('sqlite:', '', $config['db_dsn'])) : false;
+$cacheSize     = file_exists($config['cache_path']) ? filesize($config['cache_path']) : false;
 
 // Handle delete (POST + PRG)
 $feedback = null;
@@ -239,6 +253,10 @@ if ($sessionUid) {
       <?php endforeach ?>
     </span>
     <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
+    <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
+    <span class="text-muted small" style="font-size:.75em">
+      BDD&nbsp;<?= $fmtBytes($dbSize) ?> · Cache&nbsp;<?= $fmtBytes($cacheSize) ?>
+    </span>
   </div>
 </footer>
 

@@ -4,7 +4,8 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
-# Block direct access to .php files except index.php and /api/
+# Block direct access to .php files except index.php, /admin/ and /api/
 RewriteCond %{REQUEST_URI} !^/index\.php$
+RewriteCond %{REQUEST_URI} !^/admin/
 RewriteCond %{REQUEST_URI} !^/api/
 RewriteRule \.php$ - [F]
