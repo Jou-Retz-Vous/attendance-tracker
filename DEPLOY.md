@@ -62,6 +62,56 @@ git push origin v1.2.3
 Le déploiement se déclenche automatiquement à la publication de la release.
 L'avancement est visible dans l'onglet **Actions** du dépôt GitHub.
 
+## Base de données : SQLite uniquement
+
+SQLite est le seul moteur officiellement supporté et testé. L'utilisation d'un
+autre moteur (MySQL, PostgreSQL…) est possible mais nécessite des adaptations
+manuelles non couvertes par le pipeline.
+
+### Limitations avec un autre moteur
+
+| Élément | Problème | Fichier |
+|---------|----------|---------|
+| `PRAGMA user_version` | Instruction SQLite uniquement — plante au démarrage sur MySQL/PostgreSQL | `src/Database.php` |
+| `PRAGMA journal_mode=WAL` | Idem | `src/Database.php` |
+| `PRAGMA foreign_keys=ON` | Idem (les FK sont actives par défaut sur les autres moteurs) | `src/Database.php` |
+| `datetime('now')` | Syntaxe SQLite — équivalent MySQL : `NOW()` | `src/CheckinService.php` |
+
+### Déploiement manuel avec un autre moteur
+
+Si vous souhaitez utiliser MySQL ou PostgreSQL :
+
+1. **Créer le schéma manuellement** avant le premier démarrage :
+   ```sql
+   CREATE TABLE IF NOT EXISTS attendees (
+       id       VARCHAR(36)  PRIMARY KEY,
+       nickname VARCHAR(255) NOT NULL UNIQUE
+   );
+
+   CREATE TABLE IF NOT EXISTS checkins (
+       id          VARCHAR(36)  PRIMARY KEY,
+       session_uid VARCHAR(255) NOT NULL,
+       attendee_id VARCHAR(36)  NOT NULL REFERENCES attendees(id),
+       created_at  TIMESTAMP    NOT NULL
+   );
+
+   CREATE UNIQUE INDEX IF NOT EXISTS uq_checkin
+       ON checkins (session_uid, attendee_id);
+   ```
+
+2. **Désactiver les migrations automatiques** dans `src/Database.php` : retirer
+   l'appel à `self::migrate($pdo)` et les blocs `PRAGMA`.
+
+3. **Corriger `datetime('now')`** dans `src/CheckinService.php` :
+   remplacer par `NOW()` (MySQL/PostgreSQL).
+
+4. **Gérer les migrations futures manuellement** : les nouvelles versions
+   peuvent modifier le schéma — consulter les notes de release et appliquer
+   les `ALTER TABLE` correspondants avant de déployer.
+
+> Les contributions pour abstraire la couche base de données et supporter
+> d'autres moteurs sont les bienvenues.
+
 ## Migrations de schéma base de données
 
 Le schéma SQLite est versionné via `PRAGMA user_version`, un entier stocké

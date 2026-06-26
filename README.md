@@ -38,7 +38,9 @@ nom réel requis. Toutes les données restent sur votre propre hébergement.
 - Un agenda Google Calendar public (ou tout flux iCal)
 
 Pas de base de données serveur requise : les données sont stockées dans un
-fichier SQLite.
+fichier SQLite. **Seul SQLite est officiellement supporté** — voir
+[DEPLOY.md](DEPLOY.md#base-de-données-sqlite-uniquement) pour les limitations
+avec d'autres moteurs.
 
 > **Hébergement mutualisé gratuit (ex. OVHcloud inclus avec un nom de domaine) :**
 > l'espace disque est généralement limité à 100 Mo, partagé entre tous les
