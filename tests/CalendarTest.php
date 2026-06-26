@@ -96,8 +96,7 @@ class CalendarTest extends TestCase
 
     public function testExpandWeeklyRecurrence(): void
     {
-        // Weekly event starting 2026-06-01 — we expect occurrences within the
-        // Calendar window (last 30 days up to today 2026-06-26).
+        // Weekly event starting 2026-06-01, window 2026-05-27 → 2026-06-26.
         $ics = $this->vevent([
             'UID'     => 'evt-weekly',
             'SUMMARY' => 'Hebdo',
