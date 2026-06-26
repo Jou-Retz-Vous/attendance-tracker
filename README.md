@@ -1,6 +1,6 @@
 <img src="public/assets/icon.svg" alt="SPS" width="64" height="64">
 
-# Système de Pointage Simple (SPS)
+# Système de Pointage Simple (aka Attendance Tracker)
 
 Une application web légère pour enregistrer les présences aux séances de votre
 association ou de votre salle. Pas de compte à créer, pas d'application à
@@ -9,6 +9,10 @@ quel navigateur.
 
 Conçue avec la vie privée en tête : pas de tracker, pas de CDN externe, pas de
 nom réel requis. Toutes les données restent sur votre propre hébergement.
+
+| Page de pointage | Page d'administration |
+|:---:|:---:|
+| ![Page de pointage](https://raw.githubusercontent.com/holyhope/attendance-tracker/screenshots/pointage.png) | ![Page d'administration](https://raw.githubusercontent.com/holyhope/attendance-tracker/screenshots/admin.png) |
 
 ---
 

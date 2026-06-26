@@ -39,14 +39,45 @@ jobs:
           cp .ovhconfig dist/.ovhconfig
           echo "<?php return '${GITHUB_REF_NAME}';" > dist/version.php
 
+      - name: Generate screenshots
+        run: |
+          npx playwright install chromium --with-deps
+          npm run screenshots
+          # Remove demo files from dist before packaging
+          rm -f dist/config.php
+          rm -rf dist/data dist/cache
+
       - name: Zip dist
         run: cd dist && zip -r ../dist.zip .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
-          files: dist.zip
+          files: |
+            dist.zip
+            screenshots/*.png
           generate_release_notes: true
+
+      - name: Push screenshots to branch
+        run: |
+          git config user.email "github-actions@github.com"
+          git config user.name "GitHub Actions"
+          git fetch origin screenshots 2>/dev/null || true
+
+          if git show-ref --quiet refs/remotes/origin/screenshots; then
+            git worktree add -b screenshots-deploy /tmp/sc remotes/origin/screenshots
+          else
+            git worktree add --orphan -b screenshots-deploy /tmp/sc
+          fi
+
+          cp screenshots/*.png /tmp/sc/
+          cd /tmp/sc
+          git add *.png
+          git diff --cached --quiet || git commit -m "screenshots: ${{ github.ref_name }}"
+          git push origin HEAD:screenshots
+
+          cd $GITHUB_WORKSPACE
+          git worktree remove --force /tmp/sc
 
   deploy-preprod:
     needs: release
