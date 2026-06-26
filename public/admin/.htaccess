@@ -1,4 +1,4 @@
 AuthType Basic
-AuthName "Administration JRV"
+AuthName "Administration"
 AuthUserFile %%HTPASSWD_PATH%%
 Require valid-user
