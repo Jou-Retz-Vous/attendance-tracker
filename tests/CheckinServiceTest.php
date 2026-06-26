@@ -16,7 +16,6 @@ class CheckinServiceTest extends TestCase
         $this->pdo->exec('PRAGMA foreign_keys=ON');
 
         $m = new ReflectionMethod(Database::class, 'migrate');
-        $m->setAccessible(true);
         $m->invoke(null, $this->pdo);
 
         $this->service = new CheckinService($this->pdo);

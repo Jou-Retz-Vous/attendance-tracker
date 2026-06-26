@@ -52,7 +52,6 @@ class CalendarTest extends TestCase
         // The event is in the past (>30 days) so it won't appear — test the parser
         // directly via reflection instead.
         $parse = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
         $events = $parse->invoke($cal, $ics);
 
         $this->assertCount(1, $events);
@@ -69,7 +68,6 @@ class CalendarTest extends TestCase
         ]);
 
         $parse = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
 
@@ -86,7 +84,6 @@ class CalendarTest extends TestCase
              . "END:VEVENT\r\nEND:VCALENDAR";
 
         $parse = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
 
@@ -110,10 +107,8 @@ class CalendarTest extends TestCase
         ]);
 
         $expand = new ReflectionMethod(Calendar::class, 'expand');
-        $expand->setAccessible(true);
 
         $parse = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
 
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
@@ -141,9 +136,7 @@ class CalendarTest extends TestCase
         ]);
 
         $expand = new ReflectionMethod(Calendar::class, 'expand');
-        $expand->setAccessible(true);
         $parse  = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
 
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
@@ -166,9 +159,7 @@ class CalendarTest extends TestCase
         ]);
 
         $expand = new ReflectionMethod(Calendar::class, 'expand');
-        $expand->setAccessible(true);
         $parse  = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
 
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
@@ -192,9 +183,7 @@ class CalendarTest extends TestCase
         ]);
 
         $expand = new ReflectionMethod(Calendar::class, 'expand');
-        $expand->setAccessible(true);
         $parse  = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
 
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
@@ -216,9 +205,7 @@ class CalendarTest extends TestCase
         ]);
 
         $expand = new ReflectionMethod(Calendar::class, 'expand');
-        $expand->setAccessible(true);
         $parse  = new ReflectionMethod(Calendar::class, 'parseIcs');
-        $parse->setAccessible(true);
 
         $cal    = $this->calendarFrom($ics);
         $events = $parse->invoke($cal, $ics);
@@ -242,7 +229,6 @@ class CalendarTest extends TestCase
         ];
 
         $apply = new ReflectionMethod(Calendar::class, 'applyFilter');
-        $apply->setAccessible(true);
 
         $cal    = $this->calendarFrom('BEGIN:VCALENDAR\r\nEND:VCALENDAR');
         $result = $apply->invoke($cal, $sessions, ['title_patterns' => ['/Gym/']]);
@@ -261,7 +247,6 @@ class CalendarTest extends TestCase
         ];
 
         $apply = new ReflectionMethod(Calendar::class, 'applyFilter');
-        $apply->setAccessible(true);
 
         $cal    = $this->calendarFrom('BEGIN:VCALENDAR\r\nEND:VCALENDAR');
         $result = $apply->invoke($cal, $sessions, ['location_patterns' => ['/Paris/']]);
@@ -277,11 +262,111 @@ class CalendarTest extends TestCase
         ];
 
         $apply = new ReflectionMethod(Calendar::class, 'applyFilter');
-        $apply->setAccessible(true);
 
         $cal    = $this->calendarFrom('BEGIN:VCALENDAR\r\nEND:VCALENDAR');
         $result = $apply->invoke($cal, $sessions, []);
 
         $this->assertCount(2, $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // formatLabel
+    // -------------------------------------------------------------------------
+
+    public function testFormatLabelSubstitutesTitle(): void
+    {
+        $cal = $this->calendarFrom('', ['labelFormat' => 'Séance : {title}']);
+
+        $format = new ReflectionMethod(Calendar::class, 'formatLabel');
+
+        $label = $format->invoke($cal, new DateTimeImmutable('2026-06-01 10:00'), 'Gym', '', 'fr');
+        $this->assertSame('Séance : Gym', $label);
+    }
+
+    public function testFormatLabelSubstitutesLocation(): void
+    {
+        $cal = $this->calendarFrom('', ['labelFormat' => '{title} — {location}']);
+
+        $format = new ReflectionMethod(Calendar::class, 'formatLabel');
+
+        $label = $format->invoke($cal, new DateTimeImmutable('2026-06-01 10:00'), 'Yoga', 'Salle B', 'fr');
+        $this->assertSame('Yoga — Salle B', $label);
+    }
+
+    public function testFormatLabelCustomIcuPattern(): void
+    {
+        if (!extension_loaded('intl')) {
+            $this->markTestSkipped('Extension intl non disponible.');
+        }
+
+        $cal = $this->calendarFrom('', ['labelFormat' => '{date:yyyy} — {title}']);
+
+        $format = new ReflectionMethod(Calendar::class, 'formatLabel');
+
+        $label = $format->invoke($cal, new DateTimeImmutable('2026-06-01 10:00'), 'Gym', '', 'fr');
+        $this->assertSame('2026 — Gym', $label);
+    }
+
+    public function testFormatLabelDefaultDateFallbackWithoutIntl(): void
+    {
+        if (extension_loaded('intl')) {
+            $this->markTestSkipped('Test du fallback sans intl — extension présente.');
+        }
+
+        $cal = $this->calendarFrom('', ['labelFormat' => '{date} — {title}']);
+
+        $format = new ReflectionMethod(Calendar::class, 'formatLabel');
+
+        $label = $format->invoke($cal, new DateTimeImmutable('2026-06-01 10:00:00'), 'Gym', '', 'fr');
+        $this->assertStringContainsString('01/06/2026', $label);
+    }
+
+    // -------------------------------------------------------------------------
+    // fetchIcs — comportement du cache
+    // -------------------------------------------------------------------------
+
+    public function testFetchIcsServesValidCache(): void
+    {
+        $cache = tempnam(sys_get_temp_dir(), 'ics_cache_');
+        file_put_contents($cache, 'BEGIN:VCALENDAR cached END:VCALENDAR');
+
+        // TTL very large → cache is valid
+        $cal = new Calendar(url: 'http://unreachable.invalid', cachePath: $cache, cacheTtl: PHP_INT_MAX);
+
+        $fetch = new ReflectionMethod(Calendar::class, 'fetchIcs');
+
+        $this->assertSame('BEGIN:VCALENDAR cached END:VCALENDAR', $fetch->invoke($cal));
+
+        unlink($cache);
+    }
+
+    public function testFetchIcsServesStaleCacheWhenUrlUnreachable(): void
+    {
+        $cache = tempnam(sys_get_temp_dir(), 'ics_stale_');
+        file_put_contents($cache, 'BEGIN:VCALENDAR stale END:VCALENDAR');
+        // Make the cache appear expired
+        touch($cache, time() - 9999);
+
+        $cal = new Calendar(url: 'http://unreachable.invalid', cachePath: $cache, cacheTtl: 1);
+
+        $fetch = new ReflectionMethod(Calendar::class, 'fetchIcs');
+
+        // Must not throw — serves stale content instead
+        $result = $fetch->invoke($cal);
+        $this->assertSame('BEGIN:VCALENDAR stale END:VCALENDAR', $result);
+
+        unlink($cache);
+    }
+
+    public function testFetchIcsThrowsWhenUrlUnreachableAndNoCacheExists(): void
+    {
+        $cache = sys_get_temp_dir() . '/ics_no_cache_' . uniqid() . '.ics';
+
+        $cal = new Calendar(url: 'http://unreachable.invalid', cachePath: $cache, cacheTtl: 1);
+
+        $fetch = new ReflectionMethod(Calendar::class, 'fetchIcs');
+
+        $this->expectException(RuntimeException::class);
+        $fetch->invoke($cal);
     }
 }

@@ -8,7 +8,6 @@ class DatabaseTest extends TestCase
     private function migrate(PDO $pdo): void
     {
         $m = new ReflectionMethod(Database::class, 'migrate');
-        $m->setAccessible(true);
         $m->invoke(null, $pdo);
     }
 
