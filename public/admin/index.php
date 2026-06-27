@@ -39,6 +39,7 @@ $fmtBytes = function(int|false $bytes): string {
     }
     return round($bytes) . ' To';
 };
+$iconUrl       = $config['icon_url'] ?? '/assets/icon.svg';
 $dbPath        = dirname($config['db_dsn'] === '' ? '' : str_replace('sqlite:', '', $config['db_dsn']));
 $dbSize        = file_exists(str_replace('sqlite:', '', $config['db_dsn'])) ? filesize(str_replace('sqlite:', '', $config['db_dsn'])) : false;
 $cacheSize     = file_exists($config['cache_path']) ? filesize($config['cache_path']) : false;
@@ -139,8 +140,8 @@ if ($sessionUid) {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <title>Admin — <?= htmlspecialchars($config['association_name']) ?> — SPS</title>
-  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="icon" href="<?= htmlspecialchars($iconUrl) ?>">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars($iconUrl) ?>">
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
   <?php if ($showMap): ?><link rel="stylesheet" href="/assets/leaflet.min.css"><?php endif ?>
@@ -154,7 +155,7 @@ if ($sessionUid) {
 <header class="border-bottom bg-white px-3" style="padding-top: calc(0.5rem + env(safe-area-inset-top)); padding-bottom: 0.5rem">
   <div class="d-flex align-items-center gap-2">
     <a href="/" class="btn btn-outline-secondary" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center" aria-label="<?= htmlspecialchars($t['back_home']) ?>">←</a>
-    <img src="/assets/icon.svg" alt="" width="24" height="24" class="ms-1">
+    <img src="<?= htmlspecialchars($iconUrl) ?>" alt="" width="24" height="24" class="ms-1">
     <span class="fw-semibold"><?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?></span>
   </div>
 </header>

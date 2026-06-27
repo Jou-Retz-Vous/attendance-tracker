@@ -97,7 +97,10 @@ jobs:
           HTPASSWD_PATH="/home/${{ vars.FTP_USER }}/.htpasswd"
           sed -i "s|%%HTPASSWD_PATH%%|${HTPASSWD_PATH}|" dist/www/admin/.htaccess
           sed -i "s|%%HTPASSWD_PATH%%|${HTPASSWD_PATH}|" dist/www/api/admin/.htaccess
-          cat > dist/config.php << 'PHP'
+          ICON_URL='${{ vars.ICON_URL }}'
+          ICON_LINE=''
+          [ -n "$ICON_URL" ] && ICON_LINE="              'icon_url' => '$ICON_URL',"
+          cat > dist/config.php << PHP
           <?php
           return [
               'association_name'     => '${{ vars.ASSOCIATION_NAME }}',
@@ -106,6 +109,7 @@ jobs:
               'calendar_url'         => '${{ secrets.CALENDAR_URL }}',
               'session_label_format' => '{date:EEEE d MMMM yyyy}',
               'show_location'        => 'with_map',
+          $ICON_LINE
           ];
           PHP
 

@@ -4,6 +4,9 @@ RewriteEngine On
 RewriteCond %{HTTPS} off
 RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
+# Serve manifest dynamically (icon configured in config.php)
+RewriteRule ^manifest\.json$ manifest.php [L]
+
 # Block direct access to .php files except index.php, /admin/ and /api/
 RewriteCond %{REQUEST_URI} !^/index\.php$
 RewriteCond %{REQUEST_URI} !^/admin/

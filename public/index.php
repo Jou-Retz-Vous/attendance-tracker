@@ -56,6 +56,7 @@ if ($showLink) {
 
 $associationName = $config['association_name'];
 $title           = str_replace('{name}', $associationName, $t['title']);
+$iconUrl         = $config['icon_url'] ?? '/assets/icon.svg';
 
 const COOKIE_NAME = 'jrv_nickname';
 const COOKIE_TTL  = 60 * 60 * 24 * 365; // 1 year
@@ -153,8 +154,8 @@ if ($showLink) {
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#ffffff">
   <title><?= htmlspecialchars($title) ?> — SPS</title>
-  <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="icon" href="<?= htmlspecialchars($iconUrl) ?>">
+  <link rel="apple-touch-icon" href="<?= htmlspecialchars($iconUrl) ?>">
   <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
   <?php if ($showMap): ?><link rel="stylesheet" href="/assets/leaflet.min.css"><?php endif ?>
@@ -169,7 +170,7 @@ if ($showLink) {
   data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
 <header class="border-bottom bg-white px-3" style="padding-top: calc(0.5rem + env(safe-area-inset-top)); padding-bottom: 0.5rem">
   <div class="d-flex align-items-center gap-2">
-    <img src="/assets/icon.svg" alt="" width="24" height="24">
+    <img src="<?= htmlspecialchars($iconUrl) ?>" alt="" width="24" height="24">
     <span class="fw-semibold"><?= htmlspecialchars($title) ?></span>
   </div>
 </header>
