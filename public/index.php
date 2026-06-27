@@ -237,7 +237,7 @@ if ($showLink) {
 </main>
 
 <footer class="border-top bg-white py-2 px-3">
-  <div class="d-flex justify-content-center align-items-center gap-3">
+  <div class="d-flex flex-wrap justify-content-center align-items-center column-gap-3 row-gap-1">
     <span>
       <?php foreach ($supportedLangs as $code): ?>
         <?php if ($code === $lang): ?>
@@ -249,7 +249,7 @@ if ($showLink) {
     </span>
     <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
     <a href="https://github.com/holyhope/attendance-tracker?tab=License-1-ov-file" target="_blank" rel="noopener" class="text-secondary small">© <?= date('Y') ?> holyhope</a>
-    <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
+    <?php if ($version): ?><span class="text-muted small d-none d-sm-inline"><?= htmlspecialchars($version) ?></span><?php endif ?>
   </div>
 </footer>
 

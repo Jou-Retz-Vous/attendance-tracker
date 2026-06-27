@@ -153,13 +153,6 @@ if ($sessionUid) {
     <a href="/" class="btn btn-outline-secondary btn-sm"><?= htmlspecialchars($t['back_home']) ?></a>
     <img src="/assets/icon.svg" alt="" width="24" height="24" class="ms-1">
     <span class="fw-semibold"><?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?></span>
-    <form method="GET" action="/api/admin/checkins.php" class="d-flex gap-1 ms-auto">
-      <select name="format" class="form-select form-select-sm" style="width:auto">
-        <option value="grist">Grist</option>
-        <option value="csv">CSV</option>
-      </select>
-      <button type="submit" class="btn btn-outline-secondary btn-sm"><?= htmlspecialchars($t['export']) ?></button>
-    </form>
   </div>
 </header>
 <main class="flex-grow-1 py-4 px-3 mx-auto w-100" style="max-width:680px">
@@ -176,7 +169,7 @@ if ($sessionUid) {
 
       <form method="GET" action="/admin/" id="session-form">
         <label for="session" class="form-label"><?= htmlspecialchars($t['session_label']) ?></label>
-        <div class="d-flex gap-2 flex-wrap">
+        <div class="d-flex gap-2 flex-wrap align-items-start">
           <select name="session_uid" id="session" class="form-select">
             <?php foreach ($sessions as $s):
               $venue = trim(str_replace(['\\,', '\\\\'], [',', '\\'], explode('\\n', $s['location'])[0]));
@@ -190,6 +183,13 @@ if ($sessionUid) {
             <?php endforeach ?>
           </select>
           <button type="submit" class="btn btn-outline-secondary" id="btn-voir"><?= htmlspecialchars($t['view']) ?></button>
+          <form method="GET" action="/api/admin/checkins.php" class="d-flex gap-1 ms-auto">
+            <select name="format" class="form-select" style="width:auto">
+              <option value="grist">Grist</option>
+              <option value="csv">CSV</option>
+            </select>
+            <button type="submit" class="btn btn-outline-secondary"><?= htmlspecialchars($t['export']) ?></button>
+          </form>
         </div>
         <?php if ($showVenue): ?>
         <?= $showLink ? '<a' : '<span' ?> id="session-location" class="d-none mt-1 small text-muted text-decoration-none d-block"<?= $showLink ? ' href="#"' : '' ?>>
@@ -242,7 +242,7 @@ if ($sessionUid) {
 </main>
 
 <footer class="border-top bg-white py-2 px-3">
-  <div class="d-flex justify-content-center align-items-center gap-3">
+  <div class="d-flex flex-wrap justify-content-center align-items-center column-gap-3 row-gap-1">
     <span>
       <?php foreach ($supportedLangs as $code): ?>
         <?php if ($code === $lang): ?>
@@ -253,10 +253,8 @@ if ($sessionUid) {
       <?php endforeach ?>
     </span>
     <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
-    <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
-    <span class="text-muted small" style="font-size:.75em">
-      BDD&nbsp;<?= $fmtBytes($dbSize) ?> · Cache&nbsp;<?= $fmtBytes($cacheSize) ?>
-    </span>
+    <span class="text-muted small d-none d-sm-inline"><?= $fmtBytes($dbSize) ?> · <?= $fmtBytes($cacheSize) ?></span>
+    <?php if ($version): ?><span class="text-muted small d-none d-sm-inline"><?= htmlspecialchars($version) ?></span><?php endif ?>
   </div>
 </footer>
 
