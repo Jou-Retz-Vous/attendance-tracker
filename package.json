@@ -7,7 +7,8 @@
     "build:css": "sass assets/scss/bootstrap-custom.scss public/assets/bootstrap.min.css --style=compressed --load-path=node_modules --quiet",
     "build:leaflet": "cp node_modules/leaflet/dist/leaflet.js public/assets/leaflet.min.js && cp node_modules/leaflet/dist/leaflet.css public/assets/leaflet.min.css && cp -r node_modules/leaflet/dist/images public/assets/images",
     "build:js": "cp assets/js/app.js public/assets/app.js && cp assets/js/admin.js public/assets/admin.js",
-    "build": "npm run build:css && npm run build:leaflet && npm run build:js",
+    "build:icons": "node scripts/generate-icons.mjs",
+    "build": "npm run build:css && npm run build:leaflet && npm run build:js && npm run build:icons",
     "lint": "eslint assets/js",
     "screenshots": "node tests/e2e/screenshots.mjs"
   },
@@ -26,10 +27,14 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "playwright": "^1.40.0",
+    "sharp": "^0.33.0",
     "bootstrap": "^5.3.8",
     "eslint": "^10.5.0",
     "globals": "^17.7.0",
     "leaflet": "^1.9.4",
     "sass": "^1.101.0"
+  },
+  "allowScripts": {
+    "sharp@0.33.5": true
   }
 }

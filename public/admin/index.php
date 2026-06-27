@@ -136,9 +136,12 @@ if ($sessionUid) {
 <html lang="<?= $lang ?>">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#ffffff">
   <title>Admin — <?= htmlspecialchars($config['association_name']) ?> — SPS</title>
   <link rel="icon" href="/assets/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.json">
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
   <?php if ($showMap): ?><link rel="stylesheet" href="/assets/leaflet.min.css"><?php endif ?>
 </head>
@@ -148,9 +151,9 @@ if ($sessionUid) {
   data-show-location="<?= htmlspecialchars(json_encode($showLocation)) ?>"
   data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>"
   data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
-<header class="border-bottom bg-white py-2 px-3">
+<header class="border-bottom bg-white px-3" style="padding-top: calc(0.5rem + env(safe-area-inset-top)); padding-bottom: 0.5rem">
   <div class="d-flex align-items-center gap-2">
-    <a href="/" class="btn btn-outline-secondary btn-sm" aria-label="<?= htmlspecialchars($t['back_home']) ?>">←</a>
+    <a href="/" class="btn btn-outline-secondary" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center" aria-label="<?= htmlspecialchars($t['back_home']) ?>">←</a>
     <img src="/assets/icon.svg" alt="" width="24" height="24" class="ms-1">
     <span class="fw-semibold"><?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?></span>
   </div>
@@ -241,7 +244,7 @@ if ($sessionUid) {
 
 </main>
 
-<footer class="border-top bg-white py-2 px-3">
+<footer class="border-top bg-white px-3" style="padding-top: 0.5rem; padding-bottom: calc(0.5rem + env(safe-area-inset-bottom))">
   <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
     <span class="d-flex align-items-center gap-3">
       <span>
