@@ -242,19 +242,23 @@ if ($sessionUid) {
 </main>
 
 <footer class="border-top bg-white py-2 px-3">
-  <div class="d-flex flex-wrap justify-content-center align-items-center column-gap-3 row-gap-1">
-    <span>
-      <?php foreach ($supportedLangs as $code): ?>
-        <?php if ($code === $lang): ?>
-          <span title="<?= strtoupper($code) ?>" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
-        <?php else: ?>
-          <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" title="<?= strtoupper($code) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
-        <?php endif ?>
-      <?php endforeach ?>
-    </span>
-    <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
-    <span class="text-muted small"><?= $fmtBytes($dbSize) ?> · <?= $fmtBytes($cacheSize) ?></span>
-    <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
+  <div class="d-flex flex-column align-items-center gap-1">
+    <div class="d-flex align-items-center gap-3">
+      <span>
+        <?php foreach ($supportedLangs as $code): ?>
+          <?php if ($code === $lang): ?>
+            <span title="<?= strtoupper($code) ?>" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
+          <?php else: ?>
+            <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" title="<?= strtoupper($code) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
+          <?php endif ?>
+        <?php endforeach ?>
+      </span>
+      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
+    </div>
+    <div class="d-flex align-items-center gap-3">
+      <span class="text-muted small"><?= $fmtBytes($dbSize) ?> · <?= $fmtBytes($cacheSize) ?></span>
+      <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
+    </div>
   </div>
 </footer>
 
