@@ -150,5 +150,6 @@ jobs:
                    --exclude '^data/' \
                    --exclude '^cache/' \
                    --exclude '^\.htpasswd$' \
+                   --exclude '^www/confidentialite\.html$' \
                    dist/ /
           "
