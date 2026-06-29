@@ -89,8 +89,8 @@ l'association sans modifier le code :
 |-----|-------------|
 | `icon_url` | Logo affiché dans le header, le favicon et le manifest PWA. Chemin local (`/assets/logo.png`) ou URL externe. |
 | `custom_css_url` | Feuille de style chargée après Bootstrap. Chemin local ou URL `https://`. |
-| `site_url` | URL du site de l'association. Affiche un lien « ← Nom » au-dessus du header. |
-| `nav_links` | Tableau de liens `[['label' => '...', 'url' => '...']]` affichés dans la barre de navigation. |
+| `site_url` | URL du site de l'association. Affiché comme premier lien dans le menu du header de la page de pointage. |
+| `nav_links` | Tableau de liens `[['label' => '...', 'url' => '...']]` affichés à droite du header de la page de pointage. Un lien unique est affiché directement ; plusieurs liens sont regroupés dans un menu ☰. |
 
 Exemple :
 

@@ -31,6 +31,9 @@ directement sur le serveur (via FTP ou panneau OVH) :
 |---------|------|
 | `data/attendance.db` | Base SQLite (persistance des pointages) |
 | `cache/` | Cache du flux iCal (peuplé au runtime) |
+| `www/confidentialite.html` | Page de confidentialité (spécifique à l'installation) |
+
+> Tout fichier géré manuellement doit être ajouté à la liste `--exclude` du mirror lftp dans `release.yml`, sous peine d'être supprimé au prochain déploiement.
 
 `config.php` est généré automatiquement à chaque déploiement à partir des
 variables et secrets GitHub (voir pipeline ci-dessous).
