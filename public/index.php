@@ -57,12 +57,13 @@ if ($showLink) {
 $associationName = $config['association_name'];
 $title           = str_replace('{name}', $associationName, $t['title']);
 $iconUrl         = $config['icon_url'] ?? '/assets/icon.svg';
-$siteUrl         = $config['site_url']    ?? null;
-$navLinks        = $config['nav_links']   ?? [];
-$hasNav          = $siteUrl !== null || !empty($navLinks);
 $customCssUrl    = $config['custom_css_url'] ?? null;
 $safeUrl         = fn(?string $url): string => ($url && preg_match('#^(https?://|/)#', $url)) ? $url : '#';
 $safeCssUrl      = fn(?string $url): ?string => ($url && preg_match('#^(https?://|/)#', $url)) ? $url : null;
+$siteUrl         = $config['site_url']  ?? null;
+$allNavItems     = [];
+if ($siteUrl) $allNavItems[] = ['label' => '← ' . $associationName, 'url' => $siteUrl];
+foreach ($config['nav_links'] ?? [] as $link) $allNavItems[] = $link;
 
 const COOKIE_NAME = 'jrv_nickname';
 const COOKIE_TTL  = 60 * 60 * 24 * 365; // 1 year
@@ -175,26 +176,22 @@ if ($showLink) {
   data-show-location="<?= htmlspecialchars(json_encode($showLocation)) ?>"
   data-session-coords="<?= htmlspecialchars(json_encode($sessionCoords), ENT_QUOTES) ?>"
   data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
-<?php if ($hasNav): ?>
-<nav class="bg-white border-bottom px-3 small" style="padding-top: calc(0.25rem + env(safe-area-inset-top)); padding-bottom: 0.25rem">
-  <div class="d-flex align-items-center gap-3">
-    <?php if ($siteUrl): ?>
-    <a href="<?= htmlspecialchars($safeUrl($siteUrl)) ?>" class="text-secondary text-decoration-none">← <?= htmlspecialchars($associationName) ?></a>
-    <?php endif ?>
-    <?php if ($navLinks): ?>
-    <div class="d-flex gap-3 <?= $siteUrl ? 'ms-auto' : '' ?>">
-      <?php foreach ($navLinks as $link): ?>
-      <a href="<?= htmlspecialchars($safeUrl($link['url'] ?? '')) ?>" class="text-secondary text-decoration-none"><?= htmlspecialchars($link['label'] ?? '') ?></a>
-      <?php endforeach ?>
-    </div>
-    <?php endif ?>
-  </div>
-</nav>
-<?php endif ?>
-<header class="border-bottom bg-white px-3" style="padding-top: <?= $hasNav ? '0.5rem' : 'calc(0.5rem + env(safe-area-inset-top))' ?>; padding-bottom: 0.5rem">
+<header class="border-bottom bg-white px-3" style="padding-top: calc(0.5rem + env(safe-area-inset-top)); padding-bottom: 0.5rem">
   <div class="d-flex align-items-center gap-2" style="min-height:44px">
     <img src="<?= htmlspecialchars($iconUrl) ?>" alt="" width="24" height="24">
     <span class="fw-semibold"><?= htmlspecialchars($title) ?></span>
+    <?php if (count($allNavItems) === 1): ?>
+    <a href="<?= htmlspecialchars($safeUrl($allNavItems[0]['url'] ?? '')) ?>" class="ms-auto text-secondary text-decoration-none small"><?= htmlspecialchars($allNavItems[0]['label'] ?? '') ?></a>
+    <?php elseif (count($allNavItems) > 1): ?>
+    <details class="ms-auto position-relative">
+      <summary class="btn btn-outline-secondary" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">☰</summary>
+      <div class="position-absolute end-0 top-100 bg-white border rounded shadow-sm py-1 mt-1" style="min-width:160px;z-index:1000">
+        <?php foreach ($allNavItems as $item): ?>
+        <a href="<?= htmlspecialchars($safeUrl($item['url'] ?? '')) ?>" class="d-block px-3 py-2 text-secondary text-decoration-none small"><?= htmlspecialchars($item['label'] ?? '') ?></a>
+        <?php endforeach ?>
+      </div>
+    </details>
+    <?php endif ?>
   </div>
 </header>
 <main class="flex-grow-1 py-4 px-3 d-flex justify-content-center align-items-start">
