@@ -44,7 +44,7 @@ $siteUrl       = $config['site_url']     ?? null;
 $navLinks      = $config['nav_links']    ?? [];
 $hasNav        = $siteUrl !== null || !empty($navLinks);
 $customCssUrl  = $config['custom_css_url'] ?? null;
-$safeUrl       = fn(?string $url): string => ($url && preg_match('#^https?://#', $url)) ? $url : '#';
+$safeUrl       = fn(?string $url): string => ($url && preg_match('#^(https?://|/)#', $url)) ? $url : '#';
 $safeCssUrl    = fn(?string $url): ?string => ($url && preg_match('#^(https?://|/)#', $url)) ? $url : null;
 $dbPath        = dirname($config['db_dsn'] === '' ? '' : str_replace('sqlite:', '', $config['db_dsn']));
 $dbSize        = file_exists(str_replace('sqlite:', '', $config['db_dsn'])) ? filesize(str_replace('sqlite:', '', $config['db_dsn'])) : false;

@@ -61,7 +61,7 @@ $siteUrl         = $config['site_url']    ?? null;
 $navLinks        = $config['nav_links']   ?? [];
 $hasNav          = $siteUrl !== null || !empty($navLinks);
 $customCssUrl    = $config['custom_css_url'] ?? null;
-$safeUrl         = fn(?string $url): string => ($url && preg_match('#^https?://#', $url)) ? $url : '#';
+$safeUrl         = fn(?string $url): string => ($url && preg_match('#^(https?://|/)#', $url)) ? $url : '#';
 $safeCssUrl      = fn(?string $url): ?string => ($url && preg_match('#^(https?://|/)#', $url)) ? $url : null;
 
 const COOKIE_NAME = 'jrv_nickname';

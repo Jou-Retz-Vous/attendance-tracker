@@ -132,6 +132,9 @@ jobs:
           $ICON_LINE
           $SITE_LINE
           $CSS_LINE
+              'nav_links'            => [
+                  ['label' => 'Confidentialité', 'url' => '/confidentialite.html'],
+              ],
           ];
           PHP
 
