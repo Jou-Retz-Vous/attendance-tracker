@@ -105,7 +105,7 @@ let map = null, marker = null;
 function initMap(coords) {
   document.getElementById('map-notice').classList.add('d-none');
   const mapEl = document.getElementById('map');
-  mapEl.classList.remove('d-none');
+  mapEl.parentElement.classList.remove('d-none');
   requestAnimationFrame(() => {
     if (!map) {
       map = L.map('map', { zoomControl: true, attributionControl: true });
@@ -126,7 +126,7 @@ function initMap(coords) {
 function updateMap(uid) {
   const coords = sessionCoords[uid];
   const mapEl  = document.getElementById('map');
-  if (!coords || coords.lat == null) { mapEl.classList.add('d-none'); return; }
+  if (!coords || coords.lat == null) { mapEl.parentElement.classList.add('d-none'); return; }
   if (map) initMap(coords);
 }
 

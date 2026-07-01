@@ -242,7 +242,11 @@ if ($sessionUid) {
             class="d-block mt-1 small text-muted">📍 <?= htmlspecialchars($currentVenueName) ?></a>
         </noscript>
         <?php endif ?>
-        <?php if ($showMap): ?><div id="map" class="d-none rounded mt-2" style="height:220px" role="region" aria-label="<?= htmlspecialchars($t['map_label']) ?>"></div><?php endif ?>
+        <?php if ($showMap): ?>
+        <div class="ratio ratio-16x9 d-none rounded overflow-hidden mt-2">
+          <div id="map" role="region" aria-label="<?= htmlspecialchars($t['map_label']) ?>"></div>
+        </div>
+        <?php endif ?>
         <?php endif ?>
       </form>
     </div>
