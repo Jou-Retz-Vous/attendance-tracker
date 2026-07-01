@@ -242,11 +242,11 @@ if ($showLink) {
         <?php endif ?>
       </div>
 
-      <div class="mb-3">
-        <label for="nickname" class="form-label"><?= $t['nickname_label'] ?></label>
+      <div class="mb-3 form-floating">
         <input id="nickname" name="nickname" type="text" class="form-control"
-               autocomplete="off" placeholder="<?= $t['nickname_ph'] ?>"
+               autocomplete="off" placeholder=" "
                list="suggestions" value="<?= htmlspecialchars($savedNickname) ?>" required>
+        <label for="nickname"><?= $t['nickname_label'] ?></label>
         <div class="invalid-feedback"><?= htmlspecialchars($t['fill_nickname']) ?></div>
         <datalist id="suggestions"></datalist>
       </div>

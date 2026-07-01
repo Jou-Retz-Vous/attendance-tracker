@@ -256,12 +256,14 @@ if ($sessionUid) {
     <div class="card-body pb-2">
       <form method="POST" action="/admin/" id="checkin-form" novalidate>
         <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
-        <label for="checkin-nickname" class="form-label"><?= htmlspecialchars($t['checkin_admin_label']) ?></label>
         <div class="input-group has-validation">
-          <input type="text" name="nickname" id="checkin-nickname"
-                 class="form-control"
-                 placeholder="<?= htmlspecialchars($t['nickname_ph']) ?>"
-                 autocomplete="off" required<?= $sessionUid ? '' : ' disabled' ?>>
+          <div class="form-floating">
+            <input type="text" name="nickname" id="checkin-nickname"
+                   class="form-control"
+                   placeholder=" "
+                   autocomplete="off" required<?= $sessionUid ? '' : ' disabled' ?>>
+            <label for="checkin-nickname"><?= htmlspecialchars($t['nickname_label']) ?></label>
+          </div>
           <button type="submit" class="btn btn-primary"<?= $sessionUid ? '' : ' disabled' ?>><?= htmlspecialchars($t['btn_checkin']) ?></button>
           <div class="invalid-feedback" id="checkin-nickname-feedback"><?= htmlspecialchars($t['fill_nickname']) ?></div>
         </div>
