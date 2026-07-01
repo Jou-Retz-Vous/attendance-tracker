@@ -77,37 +77,51 @@ function showFeedback(msg, type) {
   const el = document.getElementById('feedback');
   el.textContent = msg;
   el.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-  setTimeout(() => el.classList.add('d-none'), 4000);
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => {
+    el.className = 'alert visually-hidden';
+    el.textContent = '';
+  }, 4000);
+}
+
+function makeCheckinRow(c, highlight = false) {
+  const date = new Date(c.created_at).toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+  const form = document.createElement('form');
+  form.method = 'POST';
+  form.action = '/admin/';
+  form.style.display = 'inline';
+  const inId  = document.createElement('input'); inId.type  = 'hidden'; inId.name  = 'checkin_id';  inId.value = c.id;
+  const inSid = document.createElement('input'); inSid.type = 'hidden'; inSid.name = 'session_uid'; inSid.value = sessionUid;
+  const btn   = document.createElement('button'); btn.type = 'submit'; btn.className = 'btn btn-outline-danger btn-sm'; btn.textContent = t.delete || 'Supprimer';
+  form.append(inId, inSid, btn);
+
+  const tr = document.createElement('tr');
+  if (highlight) {
+    tr.className = 'row-highlight';
+    tr.addEventListener('animationend', () => tr.classList.remove('row-highlight'), { once: true });
+  }
+  const tdName = document.createElement('td'); tdName.textContent = c.nickname;
+  const tdDate = document.createElement('td'); tdDate.textContent = date;
+  const tdAct  = document.createElement('td'); tdAct.className = 'text-end'; tdAct.appendChild(form);
+  tr.append(tdName, tdDate, tdAct);
+  return tr;
 }
 
 function renderCheckins(checkins) {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
-  checkins.forEach(c => {
-    const date = new Date(c.created_at).toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
-
-    const form = document.createElement('form');
-    form.method = 'POST';
-    form.action = '/admin/';
-    form.style.display = 'inline';
-    const inId  = document.createElement('input'); inId.type  = 'hidden'; inId.name  = 'checkin_id';  inId.value = c.id;
-    const inSid = document.createElement('input'); inSid.type = 'hidden'; inSid.name = 'session_uid'; inSid.value = sessionUid;
-    const btn   = document.createElement('button'); btn.type = 'submit'; btn.className = 'btn btn-outline-danger btn-sm'; btn.textContent = t.delete || 'Supprimer';
-    form.append(inId, inSid, btn);
-
-    const tr = document.createElement('tr');
-    const tdName = document.createElement('td'); tdName.textContent = c.nickname;
-    const tdDate = document.createElement('td'); tdDate.textContent = date;
-    const tdAct  = document.createElement('td'); tdAct.className = 'text-end'; tdAct.appendChild(form);
-    tr.append(tdName, tdDate, tdAct);
-    tbody.appendChild(tr);
-  });
+  checkins.forEach(c => tbody.appendChild(makeCheckinRow(c)));
 }
 
 document.getElementById('btn-voir').classList.add('d-none');
 
 document.getElementById('session').addEventListener('change', ({ target }) => {
   sessionUid = target.value;
+  const sidInput = document.querySelector('#checkin-form [name="session_uid"]');
+  if (sidInput) sidInput.value = sessionUid;
+  const nicknameInput = document.getElementById('checkin-nickname');
+  if (nicknameInput) nicknameInput.disabled = !sessionUid;
   history.pushState({ sessionUid }, '', `/admin/?session_uid=${encodeURIComponent(sessionUid)}`);
   fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
     .then(r => r.json())
@@ -123,6 +137,31 @@ window.addEventListener('popstate', ({ state }) => {
   fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
     .then(r => r.json())
     .then(({ checkins = [] }) => renderCheckins(checkins));
+});
+
+document.getElementById('checkin-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const input    = document.getElementById('checkin-nickname');
+  const nickname = input.value.trim();
+  if (!nickname) return;
+
+  const res = await fetch('/api/admin/checkin.php', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_uid: sessionUid, nickname }),
+  }).then(r => r.json());
+
+  if (res.ok) {
+    input.value = '';
+    document.getElementById('tbody').appendChild(makeCheckinRow(res.checkin, true));
+    const sel = document.getElementById('session');
+    sel.options[sel.selectedIndex].text =
+      sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${+n + 1})`);
+    showFeedback((t.checked_in || '{name}').replace('{name}', res.checkin.nickname), 'success');
+  } else {
+    const msg = res.error?.includes('Already') ? (t.already || res.error) : (t.err_generic || res.error);
+    showFeedback(msg, 'error');
+  }
 });
 
 document.getElementById('tbody').addEventListener('submit', async e => {

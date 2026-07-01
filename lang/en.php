@@ -28,5 +28,10 @@ return [
     'date_col'       => 'Date',
     'delete'         => 'Delete',
     'deleted'        => 'Entry deleted.',
-    'delete_confirm' => 'Delete this entry?',
+    'delete_confirm'       => 'Delete this entry?',
+    'checkin_admin_label'  => 'Check in a member',
+    'nav_menu_label'       => 'Navigation menu',
+    'lang_switcher_label'  => 'Language',
+    'back_home_label'      => 'Back to home',
+    'actions_col'          => 'Actions',
 ];

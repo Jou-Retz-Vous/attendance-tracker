@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../src/helpers.php';
 require_once __DIR__ . '/../../src/Database.php';
+require_once __DIR__ . '/../../src/CheckinService.php';
 require_once __DIR__ . '/../../src/Calendar.php';
 require_once __DIR__ . '/../../src/Geocoder.php';
 
@@ -26,6 +27,7 @@ $langUrlFor = function(string $code): string {
     return '?' . http_build_query($params);
 };
 $langFlag = ['fr' => '🇫🇷', 'en' => '🇬🇧'];
+$langName = ['fr' => 'Français', 'en' => 'English'];
 
 /** @var array<string, string> $t */
 $t = require __DIR__ . '/../../lang/' . $lang . '.php';
@@ -47,12 +49,31 @@ $dbPath        = dirname($config['db_dsn'] === '' ? '' : str_replace('sqlite:', 
 $dbSize        = file_exists(str_replace('sqlite:', '', $config['db_dsn'])) ? filesize(str_replace('sqlite:', '', $config['db_dsn'])) : false;
 $cacheSize     = file_exists($config['cache_path']) ? filesize($config['cache_path']) : false;
 
-// Handle delete (POST + PRG)
+// Handle POST actions (PRG pattern)
 $feedback = null;
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $checkinId  = trim($_POST['checkin_id']  ?? '');
     $sessionUid = trim($_POST['session_uid'] ?? '');
-    $deleted = false;
+
+    if (isset($_POST['nickname'])) {
+        // Checkin action
+        $nickname = trim($_POST['nickname']);
+        if (!$nickname || !$sessionUid) {
+            header('Location: /admin/?session_uid=' . urlencode($sessionUid) . '&checkin_error=empty');
+            exit;
+        }
+        try {
+            (new CheckinService(Database::get()))->checkin($sessionUid, $nickname);
+            header('Location: /admin/?session_uid=' . urlencode($sessionUid) . '&checkin_added=' . urlencode($nickname));
+        } catch (RuntimeException $e) {
+            $errKey = $e->getCode() === 409 ? 'already' : 'generic';
+            header('Location: /admin/?session_uid=' . urlencode($sessionUid) . '&checkin_error=' . $errKey . '&nickname=' . urlencode($nickname));
+        }
+        exit;
+    }
+
+    // Delete action
+    $checkinId = trim($_POST['checkin_id'] ?? '');
+    $deleted   = false;
     if ($checkinId && $sessionUid) {
         $stmt = Database::get()->prepare('DELETE FROM checkins WHERE id = ? AND session_uid = ?');
         $stmt->execute([$checkinId, $sessionUid]);
@@ -64,7 +85,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 if (isset($_GET['deleted'])) {
     $feedback = ['type' => 'success', 'msg' => $t['deleted']];
+} elseif (isset($_GET['checkin_added'])) {
+    $name     = htmlspecialchars($_GET['checkin_added']);
+    $feedback = ['type' => 'success', 'msg' => str_replace('{name}', $name, $t['checked_in'])];
+} elseif (isset($_GET['checkin_error'])) {
+    $feedback = ['type' => 'danger', 'msg' => match($_GET['checkin_error']) {
+        'already' => $t['already'],
+        'empty'   => $t['fill_nickname'],
+        default   => $t['err_generic'],
+    }];
 }
+$newlyAdded = $_GET['checkin_added'] ?? null;
 
 // Load sessions
 $calendar = new Calendar(
@@ -149,6 +180,13 @@ if ($sessionUid) {
   <link rel="stylesheet" href="/assets/bootstrap.min.css">
   <?php if ($safeCssUrl($customCssUrl)): ?><link rel="stylesheet" href="<?= htmlspecialchars($customCssUrl) ?>"><?php endif ?>
   <?php if ($showMap): ?><link rel="stylesheet" href="/assets/leaflet.min.css"><?php endif ?>
+  <style>
+    @keyframes row-highlight {
+      from { background-color: rgba(25, 135, 84, 0.2); }
+      to   { background-color: transparent; }
+    }
+    .row-highlight { animation: row-highlight 1.5s ease-out forwards; }
+  </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100"
   data-session-uid="<?= htmlspecialchars($sessionUid) ?>"
@@ -158,7 +196,7 @@ if ($sessionUid) {
   data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
 <header class="border-bottom bg-white px-3" style="padding-top: calc(0.5rem + env(safe-area-inset-top)); padding-bottom: 0.5rem">
   <div class="d-flex align-items-center gap-2" style="min-height:44px">
-    <a href="/" class="btn btn-outline-secondary" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center" aria-label="<?= htmlspecialchars($t['back_home']) ?>">←</a>
+    <a href="/" class="btn btn-outline-secondary" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center" aria-label="<?= htmlspecialchars($t['back_home_label']) ?>"><span aria-hidden="true">←</span></a>
     <img src="<?= htmlspecialchars($iconUrl) ?>" alt="" width="24" height="24" class="ms-1">
     <span class="fw-semibold"><?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?></span>
   </div>
@@ -167,13 +205,10 @@ if ($sessionUid) {
 
   <div class="card mb-3">
     <div class="card-body">
-      <?php if ($feedback): ?>
-      <div class="alert alert-<?= $feedback['type'] ?>" id="feedback" role="alert">
-        <?= htmlspecialchars($feedback['msg']) ?>
+      <div id="feedback" role="alert" aria-live="assertive" aria-atomic="true"
+           class="alert<?= $feedback ? ' alert-' . $feedback['type'] : ' visually-hidden' ?>">
+        <?= $feedback ? htmlspecialchars($feedback['msg']) : '' ?>
       </div>
-      <?php else: ?>
-      <div class="alert d-none" id="feedback" role="alert"></div>
-      <?php endif ?>
 
       <form method="GET" action="/admin/" id="session-form">
         <label for="session" class="form-label"><?= htmlspecialchars($t['session_label']) ?></label>
@@ -214,17 +249,27 @@ if ($sessionUid) {
   </div>
 
 <div class="card mb-3">
+    <div class="card-body pb-2">
+      <form method="POST" action="/admin/" id="checkin-form">
+        <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
+        <label for="checkin-nickname" class="form-label"><?= htmlspecialchars($t['checkin_admin_label']) ?></label>
+        <input type="text" name="nickname" id="checkin-nickname"
+               class="form-control"
+               placeholder="<?= htmlspecialchars($t['nickname_ph']) ?>"
+               autocomplete="off"<?= $sessionUid ? '' : ' disabled' ?>>
+      </form>
+    </div>
     <table class="table table-hover mb-0">
       <thead class="table-light">
         <tr>
-          <th><?= htmlspecialchars($t['nickname_col']) ?></th>
-          <th><?= htmlspecialchars($t['date_col']) ?></th>
-          <th></th>
+          <th scope="col"><?= htmlspecialchars($t['nickname_col']) ?></th>
+          <th scope="col"><?= htmlspecialchars($t['date_col']) ?></th>
+          <th scope="col"><span class="visually-hidden"><?= htmlspecialchars($t['actions_col']) ?></span></th>
         </tr>
       </thead>
       <tbody id="tbody">
         <?php foreach ($checkins as $c): ?>
-        <tr>
+        <tr<?= ($newlyAdded !== null && $c['nickname'] === $newlyAdded) ? ' class="row-highlight"' : '' ?>>
           <td><?= htmlspecialchars($c['nickname']) ?></td>
           <td><?= htmlspecialchars((new DateTimeImmutable($c['created_at']))->format('d/m/Y')) ?></td>
           <td class="text-end">
@@ -243,8 +288,8 @@ if ($sessionUid) {
   <div class="card mt-3">
     <div class="card-body">
       <form method="GET" action="/api/admin/checkins.php" class="d-flex gap-2 align-items-center">
-        <label class="form-label mb-0"><?= htmlspecialchars($t['export']) ?></label>
-        <select name="format" class="form-select" style="width:auto">
+        <label class="form-label mb-0" for="export-format"><?= htmlspecialchars($t['export']) ?></label>
+        <select name="format" id="export-format" class="form-select" style="width:auto">
           <option value="grist">Grist</option>
           <option value="csv">CSV</option>
         </select>
@@ -258,15 +303,15 @@ if ($sessionUid) {
 <footer class="border-top bg-white px-3" style="padding-top: 0.5rem; padding-bottom: calc(0.5rem + env(safe-area-inset-bottom))">
   <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
     <span class="d-flex align-items-center gap-3">
-      <span>
+      <nav aria-label="<?= htmlspecialchars($t['lang_switcher_label']) ?>">
         <?php foreach ($supportedLangs as $code): ?>
           <?php if ($code === $lang): ?>
-            <span title="<?= strtoupper($code) ?>" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
+            <span aria-label="<?= htmlspecialchars($langName[$code]) ?>" aria-current="true" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
           <?php else: ?>
-            <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" title="<?= strtoupper($code) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
+            <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" aria-label="<?= htmlspecialchars($langName[$code]) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
           <?php endif ?>
         <?php endforeach ?>
-      </span>
+      </nav>
       <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
     </span>
     <span class="d-flex align-items-center gap-3">

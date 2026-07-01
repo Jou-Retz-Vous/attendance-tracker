@@ -24,6 +24,7 @@ if (isset($_GET['lang']) && in_array($_GET['lang'], $supportedLangs, true)) {
 }
 $langUrlFor = fn(string $code): string => '?' . http_build_query(['lang' => $code]);
 $langFlag   = ['fr' => '🇫🇷', 'en' => '🇬🇧'];
+$langName   = ['fr' => 'Français', 'en' => 'English'];
 
 /** @var array<string, string> $t */
 $t = require __DIR__ . '/../lang/' . $lang . '.php';
@@ -184,7 +185,7 @@ if ($showLink) {
     <a href="<?= htmlspecialchars($safeUrl($allNavItems[0]['url'] ?? '')) ?>" class="ms-auto text-secondary text-decoration-none small"><?= htmlspecialchars($allNavItems[0]['label'] ?? '') ?></a>
     <?php elseif (count($allNavItems) > 1): ?>
     <details class="ms-auto position-relative">
-      <summary class="btn btn-outline-secondary" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer">☰</summary>
+      <summary class="btn btn-outline-secondary" aria-label="<?= htmlspecialchars($t['nav_menu_label']) ?>" style="min-height:44px;min-width:44px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer"><span aria-hidden="true">☰</span></summary>
       <div class="position-absolute end-0 top-100 bg-white border rounded shadow-sm py-1 mt-1" style="min-width:160px;z-index:1000">
         <?php foreach ($allNavItems as $item): ?>
         <a href="<?= htmlspecialchars($safeUrl($item['url'] ?? '')) ?>" class="d-block px-3 py-2 text-secondary text-decoration-none small"><?= htmlspecialchars($item['label'] ?? '') ?></a>
@@ -197,11 +198,10 @@ if ($showLink) {
 <main class="flex-grow-1 py-4 px-3 d-flex justify-content-center align-items-start">
 <div class="card w-100" style="max-width:420px">
   <div class="card-body">
-    <?php if ($feedback): ?>
-    <div class="alert alert-<?= $feedback['type'] ?>" role="alert">
-      <?= $feedback['msg'] ?>
+    <div id="feedback" role="alert" aria-live="assertive" aria-atomic="true"
+         class="alert<?= $feedback ? ' alert-' . $feedback['type'] : ' visually-hidden' ?>">
+      <?= $feedback ? htmlspecialchars($feedback['msg']) : '' ?>
     </div>
-    <?php endif ?>
 
     <form method="POST" action="" id="checkin-form">
       <div class="mb-3">
@@ -263,15 +263,15 @@ if ($showLink) {
 <footer class="border-top bg-white px-3" style="padding-top: 0.5rem; padding-bottom: calc(0.5rem + env(safe-area-inset-bottom))">
   <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
     <span class="d-flex align-items-center gap-3">
-      <span>
+      <nav aria-label="<?= htmlspecialchars($t['lang_switcher_label']) ?>">
         <?php foreach ($supportedLangs as $code): ?>
           <?php if ($code === $lang): ?>
-            <span title="<?= strtoupper($code) ?>" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
+            <span aria-label="<?= htmlspecialchars($langName[$code]) ?>" aria-current="true" style="opacity:.4;cursor:default"><?= $langFlag[$code] ?></span>
           <?php else: ?>
-            <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" title="<?= strtoupper($code) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
+            <a href="<?= htmlspecialchars($langUrlFor($code)) ?>" aria-label="<?= htmlspecialchars($langName[$code]) ?>" style="text-decoration:none"><?= $langFlag[$code] ?></a>
           <?php endif ?>
         <?php endforeach ?>
-      </span>
+      </nav>
       <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
     </span>
     <span class="d-flex align-items-center gap-3">

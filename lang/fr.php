@@ -44,5 +44,10 @@ return [
     'date_col'       => 'Date',
     'delete'         => 'Supprimer',
     'deleted'        => 'Entrée supprimée.',
-    'delete_confirm' => 'Supprimer cette entrée ?',
+    'delete_confirm'       => 'Supprimer cette entrée ?',
+    'checkin_admin_label'  => 'Pointer un membre',
+    'nav_menu_label'       => 'Menu de navigation',
+    'lang_switcher_label'  => 'Langue',
+    'back_home_label'      => 'Retour à l\'accueil',
+    'actions_col'          => 'Actions',
 ];

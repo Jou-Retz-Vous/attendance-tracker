@@ -28,15 +28,14 @@ const post = (path, data) => fetch(path, {
 }).then(r => r.json());
 
 function showFeedback(msg, type) {
-  let el = document.querySelector('.alert');
-  if (!el) {
-    el = document.createElement('div');
-    el.setAttribute('role', 'alert');
-    document.querySelector('.card-body').prepend(el);
-  }
+  const el = document.getElementById('feedback');
   el.textContent = msg;
   el.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-  setTimeout(() => el.remove(), 4000);
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => {
+    el.className = 'alert visually-hidden';
+    el.textContent = '';
+  }, 4000);
 }
 
 const COOKIE_NAME  = 'jrv_nickname';
