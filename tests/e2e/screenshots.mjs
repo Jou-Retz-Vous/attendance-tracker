@@ -34,21 +34,30 @@ async function waitForServer(url, attempts = 20) {
 
 await waitForServer('http://127.0.0.1:8765/');
 
-const browser  = await chromium.launch();
-const context  = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3 });
-const page     = await context.newPage();
+const viewports = [
+    { name: 'mobile',  width: 390,  height: 844,  deviceScaleFactor: 2 },
+    { name: 'tablet',  width: 768,  height: 1024, deviceScaleFactor: 2 },
+    { name: 'desktop', width: 1280, height: 800,  deviceScaleFactor: 1 },
+];
+
+const browser = await chromium.launch();
 
 try {
-    console.log('Capturing pointage page…');
-    await page.goto('http://127.0.0.1:8765/', { waitUntil: 'load' });
-    await page.waitForTimeout(300);
-    await page.screenshot({ path: `${out}/pointage.png`, fullPage: true });
+    for (const vp of viewports) {
+        console.log(`Capturing at ${vp.width}×${vp.height} (${vp.name})…`);
+        const context = await browser.newContext({ viewport: { width: vp.width, height: vp.height }, deviceScaleFactor: vp.deviceScaleFactor });
+        const page    = await context.newPage();
 
-    console.log('Capturing admin page…');
-    await page.goto('http://127.0.0.1:8765/admin/', { waitUntil: 'load' });
-    await page.waitForTimeout(300);
-    await page.screenshot({ path: `${out}/admin.png`, fullPage: true });
+        await page.goto('http://127.0.0.1:8765/', { waitUntil: 'load' });
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: `${out}/pointage-${vp.name}.png`, fullPage: true });
 
+        await page.goto('http://127.0.0.1:8765/admin/', { waitUntil: 'load' });
+        await page.waitForTimeout(300);
+        await page.screenshot({ path: `${out}/admin-${vp.name}.png`, fullPage: true });
+
+        await context.close();
+    }
     console.log(`Screenshots saved to ${out}`);
 } finally {
     await browser.close();

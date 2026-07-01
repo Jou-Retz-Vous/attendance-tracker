@@ -12,6 +12,10 @@
 @import "bootstrap/scss/root";
 @import "bootstrap/scss/reboot";
 
+// Layout
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+
 // Components
 @import "bootstrap/scss/forms";
 @import "bootstrap/scss/buttons";

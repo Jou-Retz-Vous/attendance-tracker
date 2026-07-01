@@ -201,7 +201,7 @@ if ($sessionUid) {
     <h1 class="fw-semibold fs-6 mb-0"><?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?></h1>
   </div>
 </header>
-<main class="flex-grow-1 py-4 px-3 mx-auto w-100" style="max-width:680px">
+<main class="flex-grow-1 py-4 container">
 
   <div class="card mb-3">
     <div class="card-body">

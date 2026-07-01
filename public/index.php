@@ -195,8 +195,9 @@ if ($showLink) {
     <?php endif ?>
   </div>
 </header>
-<main class="flex-grow-1 py-4 px-3 d-flex justify-content-center align-items-start">
-<div class="card w-100" style="max-width:420px">
+<main class="flex-grow-1 py-4">
+<div class="container">
+<div class="card">
   <div class="card-body">
     <div id="feedback" role="alert" aria-live="assertive" aria-atomic="true"
          class="<?= $feedback ? 'alert alert-' . $feedback['type'] : 'visually-hidden' ?>">
@@ -258,6 +259,7 @@ if ($showLink) {
     </form>
 
   </div>
+</div>
 </div>
 </main>
 
