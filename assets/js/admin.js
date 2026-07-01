@@ -97,10 +97,11 @@ function makeCheckinRow(c, highlight = false) {
   const inSid = document.createElement('input'); inSid.type = 'hidden'; inSid.name = 'session_uid'; inSid.value = sessionUid;
   const btn   = document.createElement('button'); btn.type = 'button'; btn.className = 'btn btn-outline-danger btn-sm';
   btn.dataset.deleteId = c.id;
+  btn.className = 'btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1';
   btn.setAttribute('aria-label', t.delete || 'Supprimer');
+  const iconEl = document.createElement('i'); iconEl.className = 'bi bi-trash'; iconEl.setAttribute('aria-hidden', 'true');
   const lblDesktop = document.createElement('span'); lblDesktop.className = 'd-none d-sm-inline'; lblDesktop.textContent = t.delete || 'Supprimer';
-  const lblMobile  = document.createElement('i'); lblMobile.className  = 'bi bi-trash d-sm-none'; lblMobile.setAttribute('aria-hidden', 'true');
-  btn.append(lblDesktop, lblMobile);
+  btn.append(iconEl, lblDesktop);
   form.append(inId, inSid, btn);
 
   const tr = document.createElement('tr');

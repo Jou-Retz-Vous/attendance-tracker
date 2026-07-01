@@ -264,7 +264,7 @@ if ($sessionUid) {
                    autocomplete="off" required<?= $sessionUid ? '' : ' disabled' ?>>
             <label for="checkin-nickname"><?= htmlspecialchars($t['nickname_label']) ?></label>
           </div>
-          <button type="submit" class="btn btn-primary"<?= $sessionUid ? '' : ' disabled' ?>><i class="bi bi-person-check me-1" aria-hidden="true"></i><?= htmlspecialchars($t['btn_checkin']) ?></button>
+          <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1"<?= $sessionUid ? '' : ' disabled' ?>><i class="bi bi-person-check" aria-hidden="true"></i><?= htmlspecialchars($t['btn_checkin']) ?></button>
           <div class="invalid-feedback" id="checkin-nickname-feedback"><?= htmlspecialchars($t['fill_nickname']) ?></div>
         </div>
       </form>
@@ -286,9 +286,9 @@ if ($sessionUid) {
             <form method="POST" action="/admin/" class="d-inline">
               <input type="hidden" name="checkin_id" value="<?= htmlspecialchars($c['id']) ?>">
               <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
-              <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="<?= htmlspecialchars($t['delete']) ?>">
+              <button type="submit" class="btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1" aria-label="<?= htmlspecialchars($t['delete']) ?>">
+                <i class="bi bi-trash" aria-hidden="true"></i>
                 <span class="d-none d-sm-inline"><?= htmlspecialchars($t['delete']) ?></span>
-                <i class="bi bi-trash d-sm-none" aria-hidden="true"></i>
               </button>
             </form>
           </td>
@@ -307,7 +307,7 @@ if ($sessionUid) {
             <option value="grist">Grist</option>
             <option value="csv">CSV</option>
           </select>
-          <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i><?= htmlspecialchars($t['export']) ?></button>
+          <button type="submit" class="btn btn-outline-secondary d-inline-flex align-items-center gap-1"><i class="bi bi-download" aria-hidden="true"></i><?= htmlspecialchars($t['export']) ?></button>
         </div>
       </form>
     </div>
@@ -327,10 +327,10 @@ if ($sessionUid) {
           <?php endif ?>
         <?php endforeach ?>
       </nav>
-      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small">♥ Soutenir ce projet</a>
+      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small d-inline-flex align-items-center gap-1"><i class="bi bi-heart-fill" aria-hidden="true"></i>Soutenir ce projet</a>
     </span>
     <span class="d-flex align-items-center gap-3">
-      <span class="text-muted small"><?= $fmtBytes($dbSize) ?> · <?= $fmtBytes($cacheSize) ?></span>
+      <span class="text-muted small d-inline-flex align-items-center gap-1"><i class="bi bi-database" aria-hidden="true"></i><?= $fmtBytes($dbSize) ?> · <?= $fmtBytes($cacheSize) ?></span>
       <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
     </span>
   </div>

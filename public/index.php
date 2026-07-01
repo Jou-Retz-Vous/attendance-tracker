@@ -258,8 +258,8 @@ if ($showLink) {
       </div>
 
       <div class="d-grid gap-2">
-        <button type="submit" name="action" value="checkin" class="btn btn-primary" id="btn-checkin"><i class="bi bi-person-check me-1" aria-hidden="true"></i><?= $t['btn_checkin'] ?></button>
-        <button type="submit" name="action" value="cancel" class="btn btn-outline-danger" id="btn-cancel"><i class="bi bi-person-x me-1" aria-hidden="true"></i><?= $t['btn_cancel'] ?></button>
+        <button type="submit" name="action" value="checkin" class="btn btn-primary d-flex justify-content-center align-items-center gap-1" id="btn-checkin"><i class="bi bi-person-check" aria-hidden="true"></i><?= $t['btn_checkin'] ?></button>
+        <button type="submit" name="action" value="cancel" class="btn btn-outline-danger d-flex justify-content-center align-items-center gap-1" id="btn-cancel"><i class="bi bi-person-x" aria-hidden="true"></i><?= $t['btn_cancel'] ?></button>
       </div>
     </form>
 
@@ -280,10 +280,10 @@ if ($showLink) {
           <?php endif ?>
         <?php endforeach ?>
       </nav>
-      <a href="/admin/" class="text-secondary small"><?= $t['admin_link'] ?></a>
+      <a href="/admin/" class="text-secondary small d-inline-flex align-items-center gap-1"><i class="bi bi-gear" aria-hidden="true"></i><?= $t['admin_link'] ?></a>
     </span>
     <span class="d-flex align-items-center gap-3">
-      <a href="https://github.com/holyhope/attendance-tracker?tab=License-1-ov-file" target="_blank" rel="noopener" class="text-secondary small">© <?= date('Y') ?> holyhope</a>
+      <a href="https://github.com/holyhope/attendance-tracker?tab=License-1-ov-file" target="_blank" rel="noopener" class="text-secondary small d-inline-flex align-items-center gap-1"><i class="bi bi-github" aria-hidden="true"></i>© <?= date('Y') ?> holyhope</a>
       <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
     </span>
   </div>
