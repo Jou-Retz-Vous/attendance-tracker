@@ -97,7 +97,10 @@ function makeCheckinRow(c, highlight = false) {
   const inSid = document.createElement('input'); inSid.type = 'hidden'; inSid.name = 'session_uid'; inSid.value = sessionUid;
   const btn   = document.createElement('button'); btn.type = 'button'; btn.className = 'btn btn-outline-danger btn-sm';
   btn.dataset.deleteId = c.id;
-  btn.textContent = t.delete || 'Supprimer';
+  btn.setAttribute('aria-label', t.delete || 'Supprimer');
+  const lblDesktop = document.createElement('span'); lblDesktop.className = 'd-none d-sm-inline'; lblDesktop.textContent = t.delete || 'Supprimer';
+  const lblMobile  = document.createElement('i'); lblMobile.className  = 'bi bi-trash d-sm-none'; lblMobile.setAttribute('aria-hidden', 'true');
+  btn.append(lblDesktop, lblMobile);
   form.append(inId, inSid, btn);
 
   const tr = document.createElement('tr');
@@ -106,7 +109,7 @@ function makeCheckinRow(c, highlight = false) {
     tr.addEventListener('animationend', () => tr.classList.remove('row-highlight'), { once: true });
   }
   const tdName = document.createElement('td'); tdName.textContent = c.nickname;
-  const tdDate = document.createElement('td'); tdDate.textContent = date;
+  const tdDate = document.createElement('td'); tdDate.className = 'd-none d-sm-table-cell'; tdDate.textContent = date;
   const tdAct  = document.createElement('td'); tdAct.className = 'text-end'; tdAct.appendChild(form);
   tr.append(tdName, tdDate, tdAct);
   return tr;

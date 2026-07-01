@@ -196,7 +196,7 @@ if ($sessionUid) {
   data-i18n="<?= htmlspecialchars(json_encode($t), ENT_QUOTES) ?>">
 <header class="border-bottom bg-white px-3" style="padding-top: calc(0.5rem + env(safe-area-inset-top)); padding-bottom: 0.5rem">
   <div class="d-flex align-items-center gap-2" style="min-height:44px">
-    <a href="/" class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center" style="min-height:44px;min-width:44px" aria-label="<?= htmlspecialchars($t['back_home_label']) ?>"><span aria-hidden="true">←</span></a>
+    <a href="/" class="btn btn-outline-secondary d-inline-flex align-items-center justify-content-center" style="min-height:44px;min-width:44px" aria-label="<?= htmlspecialchars($t['back_home_label']) ?>"><i class="bi bi-arrow-left" aria-hidden="true"></i></a>
     <img src="<?= htmlspecialchars($iconUrl) ?>" alt="" width="24" height="24" class="ms-1">
     <h1 class="fw-semibold fs-6 mb-0"><?= htmlspecialchars($t['admin_title']) ?> — <?= htmlspecialchars($config['association_name']) ?></h1>
   </div>
@@ -264,7 +264,7 @@ if ($sessionUid) {
                    autocomplete="off" required<?= $sessionUid ? '' : ' disabled' ?>>
             <label for="checkin-nickname"><?= htmlspecialchars($t['nickname_label']) ?></label>
           </div>
-          <button type="submit" class="btn btn-primary"<?= $sessionUid ? '' : ' disabled' ?>><?= htmlspecialchars($t['btn_checkin']) ?></button>
+          <button type="submit" class="btn btn-primary"<?= $sessionUid ? '' : ' disabled' ?>><i class="bi bi-person-check me-1" aria-hidden="true"></i><?= htmlspecialchars($t['btn_checkin']) ?></button>
           <div class="invalid-feedback" id="checkin-nickname-feedback"><?= htmlspecialchars($t['fill_nickname']) ?></div>
         </div>
       </form>
@@ -273,7 +273,7 @@ if ($sessionUid) {
       <thead class="table-light">
         <tr>
           <th scope="col"><?= htmlspecialchars($t['nickname_col']) ?></th>
-          <th scope="col"><?= htmlspecialchars($t['date_col']) ?></th>
+          <th scope="col" class="d-none d-sm-table-cell"><?= htmlspecialchars($t['date_col']) ?></th>
           <th scope="col"><span class="visually-hidden"><?= htmlspecialchars($t['actions_col']) ?></span></th>
         </tr>
       </thead>
@@ -281,12 +281,15 @@ if ($sessionUid) {
         <?php foreach ($checkins as $c): ?>
         <tr<?= ($newlyAdded !== null && $c['nickname'] === $newlyAdded) ? ' class="row-highlight"' : '' ?>>
           <td><?= htmlspecialchars($c['nickname']) ?></td>
-          <td><?= htmlspecialchars((new DateTimeImmutable($c['created_at']))->format('d/m/Y')) ?></td>
+          <td class="d-none d-sm-table-cell"><?= htmlspecialchars((new DateTimeImmutable($c['created_at']))->format('d/m/Y')) ?></td>
           <td class="text-end">
             <form method="POST" action="/admin/" class="d-inline">
               <input type="hidden" name="checkin_id" value="<?= htmlspecialchars($c['id']) ?>">
               <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
-              <button type="submit" class="btn btn-outline-danger btn-sm"><?= htmlspecialchars($t['delete']) ?></button>
+              <button type="submit" class="btn btn-outline-danger btn-sm" aria-label="<?= htmlspecialchars($t['delete']) ?>">
+                <span class="d-none d-sm-inline"><?= htmlspecialchars($t['delete']) ?></span>
+                <i class="bi bi-trash d-sm-none" aria-hidden="true"></i>
+              </button>
             </form>
           </td>
         </tr>
@@ -304,7 +307,7 @@ if ($sessionUid) {
             <option value="grist">Grist</option>
             <option value="csv">CSV</option>
           </select>
-          <button type="submit" class="btn btn-outline-secondary"><?= htmlspecialchars($t['export']) ?></button>
+          <button type="submit" class="btn btn-outline-secondary"><i class="bi bi-download me-1" aria-hidden="true"></i><?= htmlspecialchars($t['export']) ?></button>
         </div>
       </form>
     </div>

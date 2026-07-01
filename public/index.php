@@ -258,8 +258,8 @@ if ($showLink) {
       </div>
 
       <div class="d-grid gap-2">
-        <button type="submit" name="action" value="checkin" class="btn btn-primary" id="btn-checkin"><?= $t['btn_checkin'] ?></button>
-        <button type="submit" name="action" value="cancel" class="btn btn-outline-danger" id="btn-cancel"><?= $t['btn_cancel'] ?></button>
+        <button type="submit" name="action" value="checkin" class="btn btn-primary" id="btn-checkin"><i class="bi bi-person-check me-1" aria-hidden="true"></i><?= $t['btn_checkin'] ?></button>
+        <button type="submit" name="action" value="cancel" class="btn btn-outline-danger" id="btn-cancel"><i class="bi bi-person-x me-1" aria-hidden="true"></i><?= $t['btn_cancel'] ?></button>
       </div>
     </form>
 
