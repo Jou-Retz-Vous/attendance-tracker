@@ -287,13 +287,15 @@ if ($sessionUid) {
 
   <div class="card mt-3">
     <div class="card-body">
-      <form method="GET" action="/api/admin/checkins.php" class="d-flex gap-2 align-items-center">
-        <label class="form-label mb-0" for="export-format"><?= htmlspecialchars($t['export']) ?></label>
-        <select name="format" id="export-format" class="form-select w-auto">
-          <option value="grist">Grist</option>
-          <option value="csv">CSV</option>
-        </select>
-        <button type="submit" class="btn btn-outline-secondary"><?= htmlspecialchars($t['export']) ?></button>
+      <form method="GET" action="/api/admin/checkins.php">
+        <label class="form-label" for="export-format"><?= htmlspecialchars($t['export']) ?></label>
+        <div class="input-group">
+          <select name="format" id="export-format" class="form-select">
+            <option value="grist">Grist</option>
+            <option value="csv">CSV</option>
+          </select>
+          <button type="submit" class="btn btn-outline-secondary"><?= htmlspecialchars($t['export']) ?></button>
+        </div>
       </form>
     </div>
   </div>
