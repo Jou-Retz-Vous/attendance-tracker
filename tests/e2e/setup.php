@@ -70,6 +70,10 @@ $sessions = array_map(
     $days
 );
 
+// Clear previous demo data to ensure fresh, predictable state on every run
+$pdo->exec('DELETE FROM checkins');
+$pdo->exec('DELETE FROM attendees');
+
 // Demo attendees
 $attendees = ['Alice Martin', 'Bob Dupont', 'Claire Bernard', 'David Petit', 'Emma Leroy'];
 foreach ($attendees as $name) {
@@ -77,15 +81,35 @@ foreach ($attendees as $name) {
 }
 $rows = $pdo->query('SELECT id FROM attendees')->fetchAll(PDO::FETCH_COLUMN);
 
-// Populate the two most recent sessions with checkins
-$times = ['19:05', '19:08', '19:12', '19:15', '19:22'];
+// Populate the two most recent sessions with checkins.
+// created_at reflects when the check-in was recorded: most members check in on the
+// session day, but the admin may add someone retroactively (J+1 or J+2).
+$sessionData = [
+    // session 0: 3 attendees, 2 on the day + 1 added the next day by admin
+    [
+        'count'   => 3,
+        'offsets' => [0, 0, 1],
+        'times'   => ['19:03', '19:19', '11:08'],
+    ],
+    // session 1 (the one shown by default in admin): 5 attendees, 3 on the day + 2 added later
+    [
+        'count'   => 5,
+        'offsets' => [0, 0, 0, 1, 2],   // days after session date
+        'times'   => ['19:04', '19:11', '19:27', '10:15', '09:42'],
+    ],
+];
+
 foreach (array_slice($sessions, 0, 2) as $i => $sessionUid) {
-    $date = substr($sessionUid, -8);
-    $date = substr($date, 0, 4) . '-' . substr($date, 4, 2) . '-' . substr($date, 6, 2);
-    foreach (array_slice($rows, 0, $i === 0 ? 5 : 3) as $j => $attendeeId) {
+    $ymd  = substr($sessionUid, -8);
+    $base = new DateTimeImmutable(
+        substr($ymd, 0, 4) . '-' . substr($ymd, 4, 2) . '-' . substr($ymd, 6, 2)
+    );
+    $data = $sessionData[$i];
+    foreach (array_slice($rows, 0, $data['count']) as $j => $attendeeId) {
+        $checkinDate = $base->modify("+{$data['offsets'][$j]} days")->format('Y-m-d');
         try {
             $pdo->prepare("INSERT INTO checkins (id, session_uid, attendee_id, created_at) VALUES (?, ?, ?, ?)")
-                ->execute([uuid4(), $sessionUid, $attendeeId, "$date {$times[$j]}:00"]);
+                ->execute([uuid4(), $sessionUid, $attendeeId, "$checkinDate {$data['times'][$j]}:00"]);
         } catch (PDOException) {}
     }
 }

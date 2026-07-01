@@ -29,6 +29,21 @@ const post = (path, data) => fetch(path, {
   body: JSON.stringify(data),
 }).then(r => r.json());
 
+function setLoading(btn, loading) {
+  if (!btn) return;
+  btn.disabled = loading;
+  const spinner = btn.querySelector('.spinner-border');
+  if (loading && !spinner) {
+    const s = document.createElement('span');
+    s.className = 'spinner-border spinner-border-sm me-1';
+    s.setAttribute('role', 'status');
+    s.setAttribute('aria-hidden', 'true');
+    btn.prepend(s);
+  } else if (!loading && spinner) {
+    spinner.remove();
+  }
+}
+
 function showFeedback(msg, type) {
   const el = document.getElementById('feedback');
   el.textContent = msg;
@@ -157,7 +172,8 @@ sessionSel.addEventListener('change', ({ target }) => {
 
 document.getElementById('checkin-form').addEventListener('submit', async e => {
   e.preventDefault();
-  const action     = e.submitter?.value ?? 'checkin';
+  const btn        = e.submitter;
+  const action     = btn?.value ?? 'checkin';
   const nickname   = document.getElementById('nickname').value.trim();
   const sel        = document.getElementById('session');
   const sessionUid = sel.value;
@@ -170,37 +186,42 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
   }
   document.getElementById('nickname').classList.remove('is-invalid');
 
-  if (action === 'cancel') {
-    const res = await post('/api/cancel.php', { session_uid: sessionUid, nickname });
+  setLoading(btn, true);
+  try {
+    if (action === 'cancel') {
+      const res = await post('/api/cancel.php', { session_uid: sessionUid, nickname });
+      if (res.ok) {
+        showFeedback(interp(t.cancelled, res.nickname), 'success');
+        const idx = checkedUids.indexOf(sessionUid);
+        if (idx !== -1) checkedUids.splice(idx, 1);
+        if (sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
+          sel.options[sel.selectedIndex].text = sel.options[sel.selectedIndex].text.slice(2);
+        }
+        updateButtons(sessionUid);
+      } else if (res.error?.includes('No check-in')) {
+        showFeedback(t.not_checked_in, 'error');
+      } else {
+        showFeedback(t.err_generic, 'error');
+      }
+      return;
+    }
+
+    const res = await post('/api/checkin.php', { session_uid: sessionUid, nickname });
     if (res.ok) {
-      showFeedback(interp(t.cancelled, res.nickname), 'success');
-      const idx = checkedUids.indexOf(sessionUid);
-      if (idx !== -1) checkedUids.splice(idx, 1);
-      if (sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
-        sel.options[sel.selectedIndex].text = sel.options[sel.selectedIndex].text.slice(2);
+      if (document.getElementById('remember').checked) setCookie(nickname); else deleteCookie();
+      showFeedback(interp(t.checked_in, res.nickname), 'success');
+      document.getElementById('nickname').value = '';
+      checkedUids.push(sessionUid);
+      if (!sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
+        sel.options[sel.selectedIndex].text = '✅ ' + sel.options[sel.selectedIndex].text;
       }
       updateButtons(sessionUid);
-    } else if (res.error?.includes('No check-in')) {
-      showFeedback(t.not_checked_in, 'error');
+    } else if (res.error?.includes('Already')) {
+      showFeedback(t.already, 'error');
     } else {
       showFeedback(t.err_generic, 'error');
     }
-    return;
-  }
-
-  const res = await post('/api/checkin.php', { session_uid: sessionUid, nickname });
-  if (res.ok) {
-    if (document.getElementById('remember').checked) setCookie(nickname); else deleteCookie();
-    showFeedback(interp(t.checked_in, res.nickname), 'success');
-    document.getElementById('nickname').value = '';
-    checkedUids.push(sessionUid);
-    if (!sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
-      sel.options[sel.selectedIndex].text = '✅ ' + sel.options[sel.selectedIndex].text;
-    }
-    updateButtons(sessionUid);
-  } else if (res.error?.includes('Already')) {
-    showFeedback(t.already, 'error');
-  } else {
-    showFeedback(t.err_generic, 'error');
+  } finally {
+    setLoading(btn, false);
   }
 });

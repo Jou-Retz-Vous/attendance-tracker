@@ -129,6 +129,15 @@ function renderCheckins(checkins) {
 
 document.getElementById('btn-voir').classList.add('d-none');
 
+function loadCheckins(uid) {
+  const tbody = document.getElementById('tbody');
+  tbody.classList.add('opacity-50');
+  return fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(uid)}`)
+    .then(r => r.json())
+    .then(({ checkins = [] }) => { renderCheckins(checkins); })
+    .finally(() => tbody.classList.remove('opacity-50'));
+}
+
 document.getElementById('session').addEventListener('change', ({ target }) => {
   sessionUid = target.value;
   const sidInput = document.querySelector('#checkin-form [name="session_uid"]');
@@ -136,9 +145,7 @@ document.getElementById('session').addEventListener('change', ({ target }) => {
   const nicknameInput = document.getElementById('checkin-nickname');
   if (nicknameInput) nicknameInput.disabled = !sessionUid;
   history.pushState({ sessionUid }, '', `/admin/?session_uid=${encodeURIComponent(sessionUid)}`);
-  fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
-    .then(r => r.json())
-    .then(({ checkins = [] }) => renderCheckins(checkins));
+  loadCheckins(sessionUid);
   if (showMap)   updateMap(sessionUid);
   if (showVenue) updateLocation(sessionSel, sessionUid);
 });
@@ -147,10 +154,23 @@ window.addEventListener('popstate', ({ state }) => {
   if (!state?.sessionUid) return;
   sessionUid = state.sessionUid;
   document.getElementById('session').value = sessionUid;
-  fetch(`/api/admin/checkins.php?session_uid=${encodeURIComponent(sessionUid)}`)
-    .then(r => r.json())
-    .then(({ checkins = [] }) => renderCheckins(checkins));
+  loadCheckins(sessionUid);
 });
+
+function setLoading(btn, loading) {
+  if (!btn) return;
+  btn.disabled = loading;
+  const spinner = btn.querySelector('.spinner-border');
+  if (loading && !spinner) {
+    const s = document.createElement('span');
+    s.className = 'spinner-border spinner-border-sm me-1';
+    s.setAttribute('role', 'status');
+    s.setAttribute('aria-hidden', 'true');
+    btn.prepend(s);
+  } else if (!loading && spinner) {
+    spinner.remove();
+  }
+}
 
 function setInputInvalid(input, feedback, msg) {
   input.classList.add('is-invalid');
@@ -165,6 +185,7 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
   e.preventDefault();
   const input    = document.getElementById('checkin-nickname');
   const feedback = document.getElementById('checkin-nickname-feedback');
+  const submitBtn = e.currentTarget.querySelector('[type="submit"]');
   const nickname = input.value.trim();
 
   if (!nickname) {
@@ -180,23 +201,28 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
   }
 
   clearInputInvalid(input);
+  setLoading(submitBtn, true);
 
-  const res = await fetch('/api/admin/checkin.php', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_uid: sessionUid, nickname }),
-  }).then(r => r.json());
+  try {
+    const res = await fetch('/api/admin/checkin.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_uid: sessionUid, nickname }),
+    }).then(r => r.json());
 
-  if (res.ok) {
-    input.value = '';
-    document.getElementById('tbody').appendChild(makeCheckinRow(res.checkin, true));
-    const sel = document.getElementById('session');
-    sel.options[sel.selectedIndex].text =
-      sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${+n + 1})`);
-    showFeedback((t.checked_in || '{name}').replace('{name}', res.checkin.nickname), 'success');
-  } else {
-    const msg = res.error?.includes('Already') ? (t.already || res.error) : (t.err_generic || res.error);
-    setInputInvalid(input, feedback, msg);
+    if (res.ok) {
+      input.value = '';
+      document.getElementById('tbody').appendChild(makeCheckinRow(res.checkin, true));
+      const sel = document.getElementById('session');
+      sel.options[sel.selectedIndex].text =
+        sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${+n + 1})`);
+      showFeedback((t.checked_in || '{name}').replace('{name}', res.checkin.nickname), 'success');
+    } else {
+      const msg = res.error?.includes('Already') ? (t.already || res.error) : (t.err_generic || res.error);
+      setInputInvalid(input, feedback, msg);
+    }
+  } finally {
+    setLoading(submitBtn, false);
   }
 });
 
@@ -207,18 +233,24 @@ document.getElementById('tbody').addEventListener('click', async e => {
   if (btn.dataset.confirmDelete) {
     // Second click — proceed with delete
     const checkinId = btn.dataset.confirmDelete;
-    const res = await fetch('/api/admin/delete.php', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ checkin_id: checkinId }),
-    }).then(r => r.json());
-    if (res.ok) {
-      btn.closest('tr').remove();
-      const sel = document.getElementById('session');
-      sel.options[sel.selectedIndex].text =
-        sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${Math.max(0, n - 1)})`);
-    } else {
-      showFeedback(res.error || t.err_generic || 'Erreur.', 'error');
+    setLoading(btn, true);
+    try {
+      const res = await fetch('/api/admin/delete.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checkin_id: checkinId }),
+      }).then(r => r.json());
+      if (res.ok) {
+        btn.closest('tr').remove();
+        const sel = document.getElementById('session');
+        sel.options[sel.selectedIndex].text =
+          sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${Math.max(0, n - 1)})`);
+      } else {
+        showFeedback(res.error || t.err_generic || 'Erreur.', 'error');
+        setLoading(btn, false);
+      }
+    } catch {
+      setLoading(btn, false);
     }
     return;
   }
