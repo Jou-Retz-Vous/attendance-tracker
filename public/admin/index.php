@@ -253,10 +253,13 @@ if ($sessionUid) {
       <form method="POST" action="/admin/" id="checkin-form">
         <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
         <label for="checkin-nickname" class="form-label"><?= htmlspecialchars($t['checkin_admin_label']) ?></label>
-        <input type="text" name="nickname" id="checkin-nickname"
-               class="form-control"
-               placeholder="<?= htmlspecialchars($t['nickname_ph']) ?>"
-               autocomplete="off"<?= $sessionUid ? '' : ' disabled' ?>>
+        <div class="input-group">
+          <input type="text" name="nickname" id="checkin-nickname"
+                 class="form-control"
+                 placeholder="<?= htmlspecialchars($t['nickname_ph']) ?>"
+                 autocomplete="off"<?= $sessionUid ? '' : ' disabled' ?>>
+          <button type="submit" class="btn btn-primary"<?= $sessionUid ? '' : ' disabled' ?>><?= htmlspecialchars($t['btn_checkin']) ?></button>
+        </div>
       </form>
     </div>
     <table class="table table-hover mb-0">
