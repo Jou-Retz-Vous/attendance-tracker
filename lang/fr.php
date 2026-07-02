@@ -63,4 +63,5 @@ return [
     'csv_col_nickname'     => 'pseudonyme',
     'csv_col_date'         => 'date',
     'no_sessions'          => 'Aucune séance disponible.',
+    'no_checkins'          => 'Aucun participant pour cette séance.',
 ];

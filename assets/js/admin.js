@@ -128,7 +128,14 @@ document.querySelectorAll('#tbody [name="checkin_id"]').forEach(input => {
 function renderCheckins(checkins) {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
-  checkins.forEach(c => tbody.appendChild(makeCheckinRow(c)));
+  if (!checkins.length) {
+    const tr = document.createElement('tr'); tr.id = 'tr-empty';
+    const td = document.createElement('td'); td.colSpan = 3; td.className = 'text-center text-muted py-3';
+    td.textContent = t.no_checkins || '';
+    tr.appendChild(td); tbody.appendChild(tr);
+  } else {
+    checkins.forEach(c => tbody.appendChild(makeCheckinRow(c)));
+  }
 }
 
 document.getElementById('btn-voir').classList.add('d-none');
@@ -216,7 +223,9 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
 
     if (res.ok) {
       input.value = '';
-      document.getElementById('tbody').appendChild(makeCheckinRow(res.checkin, true));
+      const tbody = document.getElementById('tbody');
+      document.getElementById('tr-empty')?.remove();
+      tbody.appendChild(makeCheckinRow(res.checkin, true));
       const sel = document.getElementById('session');
       sel.options[sel.selectedIndex].text =
         sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${+n + 1})`);
@@ -246,6 +255,8 @@ document.getElementById('tbody').addEventListener('click', async e => {
       }).then(r => r.json());
       if (res.ok) {
         btn.closest('tr').remove();
+        const tbody = document.getElementById('tbody');
+        if (!tbody.querySelector('tr:not(#tr-empty)')) renderCheckins([]);
         const sel = document.getElementById('session');
         sel.options[sel.selectedIndex].text =
           sel.options[sel.selectedIndex].text.replace(/\((\d+)\)/, (_, n) => `(${Math.max(0, n - 1)})`);

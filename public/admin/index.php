@@ -286,6 +286,9 @@ if ($sessionUid) {
         </tr>
       </thead>
       <tbody id="tbody">
+        <?php if (!$checkins): ?>
+        <tr id="tr-empty"><td colspan="3" class="text-center text-muted py-3"><?= htmlspecialchars($t['no_checkins']) ?></td></tr>
+        <?php else: ?>
         <?php foreach ($checkins as $c): ?>
         <tr<?= ($newlyAdded !== null && $c['nickname'] === $newlyAdded) ? ' class="row-highlight"' : '' ?>>
           <td class="text-truncate"><?= htmlspecialchars($c['nickname']) ?></td>
@@ -302,6 +305,7 @@ if ($sessionUid) {
           </td>
         </tr>
         <?php endforeach ?>
+        <?php endif ?>
       </tbody>
     </table>
   </div>
