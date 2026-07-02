@@ -251,7 +251,7 @@ if ($sessionUid) {
         </noscript>
         <?php endif ?>
         <?php if ($showMap): ?>
-        <div class="ratio ratio-16x9 d-none rounded overflow-hidden mt-2">
+        <div class="ratio ratio-21x9 d-none rounded overflow-hidden mt-2">
           <div id="map" role="region" aria-label="<?= htmlspecialchars($t['map_label']) ?>"></div>
         </div>
         <?php endif ?>
