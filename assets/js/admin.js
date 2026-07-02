@@ -66,16 +66,7 @@ const sessionSel = document.getElementById('session');
 if (showVenue) updateLocation(sessionSel, sessionUid);
 if (showMap)   updateMap(sessionUid);
 
-function showFeedback(msg, type) {
-  const el = document.getElementById('feedback');
-  el.textContent = msg;
-  el.className = `alert alert-${type === 'success' ? 'success' : 'danger'}`;
-  clearTimeout(el._timer);
-  el._timer = setTimeout(() => {
-    el.className = 'visually-hidden';
-    el.textContent = '';
-  }, 4000);
-}
+import { setLoading, showFeedback } from './ui.js';
 
 function makeCheckinRow(c, highlight = false) {
   const date = new Date(c.created_at).toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -159,20 +150,6 @@ window.addEventListener('popstate', ({ state }) => {
   loadCheckins(sessionUid);
 });
 
-function setLoading(btn, loading) {
-  if (!btn) return;
-  btn.disabled = loading;
-  const spinner = btn.querySelector('.spinner-border');
-  if (loading && !spinner) {
-    const s = document.createElement('span');
-    s.className = 'spinner-border spinner-border-sm me-1';
-    s.setAttribute('role', 'status');
-    s.setAttribute('aria-hidden', 'true');
-    btn.prepend(s);
-  } else if (!loading && spinner) {
-    spinner.remove();
-  }
-}
 
 function setInputInvalid(input, feedback, msg) {
   input.classList.add('is-invalid');
