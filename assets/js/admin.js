@@ -8,34 +8,16 @@ const showVenue    = showLocation !== false;
 const showLink     = showLocation === 'only_link' || showLocation === 'with_map';
 const showMap      = showLocation === 'with_map';
 
-let map = null, marker = null;
-
-function initMap(coords) {
-  document.getElementById('map-notice').classList.add('d-none');
-  const mapEl = document.getElementById('map');
-  mapEl.parentElement.classList.remove('d-none');
-  requestAnimationFrame(() => {
-    if (!map) {
-      map = L.map('map', { zoomControl: true, attributionControl: true });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
-      marker = L.marker([coords.lat, coords.lon]).addTo(map);
-      map.setView([coords.lat, coords.lon], 15);
-    } else {
-      marker.setLatLng([coords.lat, coords.lon]);
-      map.setView([coords.lat, coords.lon], 15);
-      map.invalidateSize();
-    }
-  });
-}
+import { map, initMap } from './map.js';
 
 function updateMap(uid) {
   const coords = sessionCoords[uid];
   const mapEl  = document.getElementById('map');
   if (!coords || coords.lat == null) { mapEl.parentElement.classList.add('d-none'); return; }
-  if (map) initMap(coords);
+  if (map) {
+    const wasHidden = mapEl.parentElement.classList.contains('d-none');
+    initMap(coords, !wasHidden);
+  }
 }
 
 function updateLocation(sel, uid) {
@@ -52,7 +34,16 @@ function updateLocation(sel, uid) {
   if (showMap) {
     const notice = document.getElementById('map-notice');
     if (coords?.lat != null) {
-      el.onclick = e => { e.preventDefault(); initMap(coords); };
+      el.onclick = e => {
+        e.preventDefault();
+        const mapContainer = document.getElementById('map').parentElement;
+        if (!map) {
+          initMap(coords);
+        } else {
+          mapContainer.classList.toggle('d-none');
+          if (!mapContainer.classList.contains('d-none')) map.invalidateSize();
+        }
+      };
       el.style.cursor = 'pointer';
       if (!map) notice.classList.remove('d-none');
     } else {
