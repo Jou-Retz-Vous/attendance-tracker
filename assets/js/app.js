@@ -119,7 +119,6 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
     if (res.ok) {
       if (document.getElementById('remember').checked) setCookie(nickname); else deleteCookie();
       showFeedback(interp(t.checked_in, res.nickname), 'success');
-      document.getElementById('nickname').value = '';
       checkedUids.push(sessionUid);
       if (!sel.options[sel.selectedIndex].text.startsWith('✅ ')) {
         sel.options[sel.selectedIndex].text = '✅ ' + sel.options[sel.selectedIndex].text;
