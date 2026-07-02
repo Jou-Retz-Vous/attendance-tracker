@@ -264,7 +264,7 @@ if ($sessionUid) {
                    autocomplete="off" required<?= $sessionUid ? '' : ' disabled' ?>>
             <label for="checkin-nickname"><?= htmlspecialchars($t['nickname_label']) ?></label>
           </div>
-          <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1"<?= $sessionUid ? '' : ' disabled' ?>><i class="bi bi-person-check" aria-hidden="true"></i><?= htmlspecialchars($t['btn_checkin']) ?></button>
+          <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1"<?= $sessionUid ? '' : ' disabled' ?>><i class="bi bi-person-check" aria-hidden="true"></i><?= htmlspecialchars($t['btn_checkin_short']) ?></button>
           <div class="invalid-feedback" id="checkin-nickname-feedback"><?= htmlspecialchars($t['fill_nickname']) ?></div>
         </div>
       </form>

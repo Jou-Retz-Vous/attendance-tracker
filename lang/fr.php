@@ -46,6 +46,7 @@ return [
     'deleted'        => 'Entrée supprimée.',
     'delete_confirm'       => 'Supprimer cette entrée ?',
     'checkin_admin_label'  => 'Pointer un membre',
+    'btn_checkin_short'    => 'Ajouter',
     'nav_menu_label'       => 'Menu de navigation',
     'lang_switcher_label'  => 'Langue',
     'back_home_label'      => 'Retour à l\'accueil',

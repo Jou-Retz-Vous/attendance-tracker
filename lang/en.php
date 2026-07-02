@@ -30,6 +30,7 @@ return [
     'deleted'        => 'Entry deleted.',
     'delete_confirm'       => 'Delete this entry?',
     'checkin_admin_label'  => 'Check in a member',
+    'btn_checkin_short'    => 'Add',
     'nav_menu_label'       => 'Navigation menu',
     'lang_switcher_label'  => 'Language',
     'back_home_label'      => 'Back to home',
