@@ -35,6 +35,7 @@ $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 // Disk usage
 $fmtBytes = function(int|false $bytes) use ($t): string {
     if ($bytes === false) return '?';
+    /** @var array<string> $units */
     $units = $t['storage_units'];
     foreach ($units as $unit) {
         if ($bytes < 1024) return round($bytes) . ' ' . $unit;
