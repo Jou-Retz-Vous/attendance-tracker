@@ -54,12 +54,48 @@ function syncCheckedState(nickname) {
   updateButtons(sel.value);
 }
 
+function syncRemember(val) {
+  const cookie   = getCookie();
+  const decoded  = cookie ? decodeURIComponent(cookie) : '';
+  const checkbox = document.getElementById('remember');
+  const hint     = document.getElementById('saved-nickname-hint');
+  const matches  = decoded !== '' && val === decoded;
+  checkbox.indeterminate = decoded !== '' && !matches;
+  checkbox.checked = matches;
+  if (decoded !== '') {
+    document.getElementById('saved-nickname-value').textContent = decoded;
+    hint.classList.remove('d-none');
+  } else {
+    hint.classList.add('d-none');
+  }
+}
+
+function forgetNickname() {
+  deleteCookie();
+  const checkbox = document.getElementById('remember');
+  checkbox.checked = false;
+  checkbox.indeterminate = false;
+  document.getElementById('saved-nickname-hint').classList.add('d-none');
+}
+
+document.getElementById('remember').addEventListener('change', ({ target }) => {
+  const val = document.getElementById('nickname').value.trim();
+  if (target.checked && val) {
+    setCookie(val);
+    document.getElementById('saved-nickname-value').textContent = val;
+    document.getElementById('saved-nickname-hint').classList.remove('d-none');
+    target.indeterminate = false;
+  } else if (!target.checked) {
+    forgetNickname();
+  }
+});
+
+document.getElementById('btn-forget').addEventListener('click', forgetNickname);
+
 let timer;
 document.getElementById('nickname').addEventListener('input', ({ target }) => {
-  const val      = target.value.trim();
-  const checkbox = document.getElementById('remember');
-  const matches  = val === decodeURIComponent(getCookie());
-  if (checkbox.checked !== matches) checkbox.checked = matches;
+  const val = target.value.trim();
+  syncRemember(val);
   syncCheckedState(val);
 
   clearTimeout(timer);
@@ -117,7 +153,8 @@ document.getElementById('checkin-form').addEventListener('submit', async e => {
 
     const res = await post('/api/checkin.php', { session_uid: sessionUid, nickname });
     if (res.ok) {
-      if (document.getElementById('remember').checked) setCookie(nickname); else deleteCookie();
+      const rememberCb = document.getElementById('remember');
+      if (!rememberCb.checked && !rememberCb.indeterminate) forgetNickname();
       showFeedback(interp(t.checked_in, res.nickname), 'success');
       checkedUids.push(sessionUid);
       if (!sel.options[sel.selectedIndex].text.startsWith('✅ ')) {

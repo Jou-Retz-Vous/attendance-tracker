@@ -251,10 +251,14 @@ if ($showLink) {
         <datalist id="suggestions"></datalist>
       </div>
 
-      <div class="form-check mb-3">
+      <div class="form-check mb-1">
         <input id="remember" name="remember" type="checkbox" class="form-check-input"
                <?= $savedNickname !== '' ? 'checked' : '' ?>>
         <label for="remember" class="form-check-label"><?= $t['remember'] ?></label>
+      </div>
+      <div id="saved-nickname-hint" class="small text-muted mb-3 ms-4<?= $savedNickname === '' ? ' d-none' : '' ?>">
+        <?= htmlspecialchars($t['saved_nickname_hint']) ?> : <strong id="saved-nickname-value"><?= htmlspecialchars($savedNickname) ?></strong>
+        — <button type="button" id="btn-forget" class="btn btn-link btn-sm p-0 text-muted"><?= htmlspecialchars($t['forget_nickname']) ?></button>
       </div>
 
       <div class="d-grid gap-2">
