@@ -79,6 +79,7 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v3
         with:
+          draft: true
           files: dist.zip
           body: |
             [📸 Screenshots (${{ github.ref_name }})](https://github.com/${{ github.repository }}/tree/${{ steps.screenshots.outputs.sha }})
