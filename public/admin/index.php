@@ -277,25 +277,20 @@ if ($sessionUid) {
         </div>
       </form>
     </div>
-    <table class="table table-hover table-striped mb-0" style="table-layout:fixed">
-      <colgroup>
-        <col>
-        <col class="d-none d-sm-table-cell" style="width:8rem">
-        <col style="width:7rem">
-      </colgroup>
+    <table class="table table-hover table-striped mb-0">
       <thead class="table-light">
         <tr>
           <th scope="col" class="text-truncate"><?= htmlspecialchars($t['nickname_col']) ?></th>
-          <th scope="col" class="d-none d-sm-table-cell"><?= htmlspecialchars($t['date_col']) ?></th>
-          <th scope="col"><span class="visually-hidden"><?= htmlspecialchars($t['actions_col']) ?></span></th>
+          <th scope="col" class="d-none d-sm-table-cell" style="white-space:nowrap"><?= htmlspecialchars($t['date_col']) ?></th>
+          <th scope="col" style="white-space:nowrap"><span class="visually-hidden"><?= htmlspecialchars($t['actions_col']) ?></span></th>
         </tr>
       </thead>
       <tbody id="tbody">
         <?php foreach ($checkins as $c): ?>
         <tr<?= ($newlyAdded !== null && $c['nickname'] === $newlyAdded) ? ' class="row-highlight"' : '' ?>>
           <td class="text-truncate"><?= htmlspecialchars($c['nickname']) ?></td>
-          <td class="d-none d-sm-table-cell"><?= htmlspecialchars((new DateTimeImmutable($c['created_at']))->format('d/m/Y')) ?></td>
-          <td class="text-end">
+          <td class="d-none d-sm-table-cell" style="white-space:nowrap"><?= htmlspecialchars((new DateTimeImmutable($c['created_at']))->format('d/m/Y')) ?></td>
+          <td class="text-end" style="white-space:nowrap">
             <form method="POST" action="/admin/" class="d-inline">
               <input type="hidden" name="checkin_id" value="<?= htmlspecialchars($c['id']) ?>">
               <input type="hidden" name="session_uid" value="<?= htmlspecialchars($sessionUid) ?>">
