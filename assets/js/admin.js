@@ -1,72 +1,16 @@
+import { setLoading, showFeedback } from './ui.js';
+import { MapManager } from './map.js';
+
 const body          = document.body;
 const lang          = body.dataset.lang || 'fr';
 const t             = JSON.parse(body.dataset.i18n || '{}');
 let sessionUid      = body.dataset.sessionUid || '';
 const sessionCoords = JSON.parse(body.dataset.sessionCoords || '{}');
-const showLocation = JSON.parse(body.dataset.showLocation || '"with_map"');
-const showVenue    = showLocation !== false;
-const showLink     = showLocation === 'only_link' || showLocation === 'with_map';
-const showMap      = showLocation === 'with_map';
-
-import { map, initMap } from './map.js';
-
-function updateMap(uid) {
-  const coords = sessionCoords[uid];
-  const mapEl  = document.getElementById('map');
-  if (!coords || coords.lat == null) { mapEl.parentElement.classList.add('d-none'); return; }
-  if (map) {
-    const wasHidden = mapEl.parentElement.classList.contains('d-none');
-    initMap(coords, !wasHidden);
-  }
-}
-
-function updateLocation(sel, uid) {
-  const venue  = sel.options[sel.selectedIndex]?.dataset.location ?? '';
-  const coords = sessionCoords[uid];
-  const el     = document.getElementById('session-location');
-  if (!venue) { el.classList.add('d-none'); return; }
-
-  document.getElementById('venue-name').textContent = '📍 ' + venue;
-  el.classList.remove('d-none');
-  el.onclick = null;
-  el.style.cursor = '';
-
-  if (showMap) {
-    const notice = document.getElementById('map-notice');
-    if (coords?.lat != null) {
-      el.onclick = e => {
-        e.preventDefault();
-        const mapContainer = document.getElementById('map').parentElement;
-        if (!map) {
-          initMap(coords);
-        } else {
-          mapContainer.classList.toggle('d-none');
-          if (!mapContainer.classList.contains('d-none')) map.invalidateSize();
-        }
-      };
-      el.style.cursor = 'pointer';
-      if (!map) notice.classList.remove('d-none');
-    } else {
-      notice.classList.add('d-none');
-    }
-  } else if (showLink) {
-    if (coords?.lat != null) {
-      el.href = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lon}#map=15/${coords.lat}/${coords.lon}`;
-      el.target = '_blank';
-      el.rel = 'noopener';
-      el.tabIndex = 0;
-    } else {
-      el.removeAttribute('href');
-      el.tabIndex = -1;
-    }
-  }
-}
+const showLocation  = JSON.parse(body.dataset.showLocation || '"with_map"');
 
 const sessionSel = document.getElementById('session');
-if (showVenue) updateLocation(sessionSel, sessionUid);
-if (showMap)   updateMap(sessionUid);
-
-import { setLoading, showFeedback } from './ui.js';
+const mapManager = new MapManager({ sessionCoords, showLocation });
+mapManager.setup(sessionSel, sessionUid);
 
 function makeCheckinRow(c, highlight = false) {
   const date = new Date(c.created_at).toLocaleDateString(lang, { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -77,7 +21,7 @@ function makeCheckinRow(c, highlight = false) {
   form.style.display = 'inline';
   const inId  = document.createElement('input'); inId.type  = 'hidden'; inId.name  = 'checkin_id';  inId.value = c.id;
   const inSid = document.createElement('input'); inSid.type = 'hidden'; inSid.name = 'session_uid'; inSid.value = sessionUid;
-  const btn   = document.createElement('button'); btn.type = 'button'; btn.className = 'btn btn-outline-danger btn-sm';
+  const btn   = document.createElement('button'); btn.type = 'button';
   btn.dataset.deleteId = c.id;
   btn.className = 'btn btn-outline-danger btn-sm d-inline-flex align-items-center gap-1';
   btn.setAttribute('aria-label', t.delete || 'Supprimer');
@@ -139,8 +83,7 @@ document.getElementById('session').addEventListener('change', ({ target }) => {
   if (nicknameInput) nicknameInput.disabled = !sessionUid;
   history.pushState({ sessionUid }, '', `/admin/?session_uid=${encodeURIComponent(sessionUid)}`);
   loadCheckins(sessionUid);
-  if (showMap)   updateMap(sessionUid);
-  if (showVenue) updateLocation(sessionSel, sessionUid);
+  mapManager.onSessionChange(sessionSel, sessionUid);
 });
 
 window.addEventListener('popstate', ({ state }) => {
@@ -149,7 +92,6 @@ window.addEventListener('popstate', ({ state }) => {
   document.getElementById('session').value = sessionUid;
   loadCheckins(sessionUid);
 });
-
 
 function setInputInvalid(input, feedback, msg) {
   input.classList.add('is-invalid');
@@ -212,7 +154,6 @@ document.getElementById('tbody').addEventListener('click', async e => {
   if (!btn) return;
 
   if (btn.dataset.confirmDelete) {
-    // Second click — proceed with delete
     const checkinId = btn.dataset.confirmDelete;
     setLoading(btn, true);
     try {
@@ -238,7 +179,6 @@ document.getElementById('tbody').addEventListener('click', async e => {
     return;
   }
 
-  // First click — enter confirmation state
   const checkinId = btn.dataset.deleteId;
   btn.removeAttribute('data-delete-id');
   btn.dataset.confirmDelete = checkinId;

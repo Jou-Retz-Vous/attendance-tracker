@@ -1,16 +1,17 @@
+import { setLoading, showFeedback } from './ui.js';
+import { MapManager } from './map.js';
+
 const body           = document.body;
 const checkedUids    = JSON.parse(body.dataset.checkedUids || '[]');
 const initialChecked = [...checkedUids];
 const savedNickname  = JSON.parse(body.dataset.savedNickname || '""');
 const sessionCoords  = JSON.parse(body.dataset.sessionCoords || '{}');
 const showLocation   = JSON.parse(body.dataset.showLocation || '"with_map"');
-const showVenue      = showLocation !== false;
-const showLink       = showLocation === 'only_link' || showLocation === 'with_map';
-const showMap        = showLocation === 'with_map';
 
-const t = JSON.parse(body.dataset.i18n || '{}');
-const interp = (tpl, name) => tpl.replace('{name}', name);
+const t          = JSON.parse(body.dataset.i18n || '{}');
+const interp     = (tpl, name) => tpl.replace('{name}', name);
 const sessionSel = document.getElementById('session');
+const mapManager = new MapManager({ sessionCoords, showLocation });
 
 function updateButtons(sessionUid) {
   const checked = checkedUids.includes(sessionUid);
@@ -21,15 +22,18 @@ function updateButtons(sessionUid) {
 }
 
 updateButtons(sessionSel.value);
-sessionSel.addEventListener('change', ({ target }) => updateButtons(target.value));
+mapManager.setup(sessionSel, sessionSel.value);
+
+sessionSel.addEventListener('change', ({ target }) => {
+  updateButtons(target.value);
+  mapManager.onSessionChange(target, target.value);
+});
 
 const post = (path, data) => fetch(path, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify(data),
 }).then(r => r.json());
-
-import { setLoading, showFeedback } from './ui.js';
 
 const COOKIE_NAME  = 'jrv_nickname';
 const getCookie    = () => document.cookie.split('; ').find(r => r.startsWith(COOKIE_NAME + '='))?.split('=')[1] ?? '';
@@ -73,65 +77,6 @@ document.getElementById('nickname').addEventListener('input', ({ target }) => {
         });
       });
   }, 200);
-});
-
-// ── Map ──────────────────────────────────────────────────────────────────────
-import { map, initMap } from './map.js';
-
-function updateMap(uid) {
-  const coords = sessionCoords[uid];
-  const mapEl  = document.getElementById('map');
-  if (!coords || coords.lat == null) { mapEl.parentElement.classList.add('d-none'); return; }
-  if (map) initMap(coords);
-}
-
-function updateLocation(sel, uid) {
-  const venue  = sel.options[sel.selectedIndex]?.dataset.location ?? '';
-  const coords = sessionCoords[uid];
-  const el     = document.getElementById('session-location');
-  if (!venue) { el.classList.add('d-none'); return; }
-
-  document.getElementById('venue-name').textContent = '📍 ' + venue;
-  el.classList.remove('d-none');
-  el.onclick = null;
-  el.style.cursor = '';
-
-  if (showMap) {
-    const notice = document.getElementById('map-notice');
-    if (coords?.lat != null) {
-      el.onclick = e => {
-        e.preventDefault();
-        const mapContainer = document.getElementById('map').parentElement;
-        if (!map) {
-          initMap(coords);
-        } else {
-          mapContainer.classList.toggle('d-none');
-          if (!mapContainer.classList.contains('d-none')) map.invalidateSize();
-        }
-      };
-      el.style.cursor = 'pointer';
-      if (!map) notice.classList.remove('d-none');
-    } else {
-      notice.classList.add('d-none');
-    }
-  } else if (showLink) {
-    if (coords?.lat != null) {
-      el.href = `https://www.openstreetmap.org/?mlat=${coords.lat}&mlon=${coords.lon}#map=15/${coords.lat}/${coords.lon}`;
-      el.target = '_blank';
-      el.rel = 'noopener';
-      el.tabIndex = 0;
-    } else {
-      el.removeAttribute('href');
-      el.tabIndex = -1;
-    }
-  }
-}
-
-if (showVenue) updateLocation(sessionSel, sessionSel.value);
-if (showMap)   updateMap(sessionSel.value);
-sessionSel.addEventListener('change', ({ target }) => {
-  if (showVenue) updateLocation(target, target.value);
-  if (showMap)   updateMap(target.value);
 });
 
 document.getElementById('checkin-form').addEventListener('submit', async e => {
