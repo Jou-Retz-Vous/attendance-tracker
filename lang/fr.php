@@ -54,4 +54,13 @@ return [
     'confirm_delete'       => 'Confirmer ?',
     'cancel_action'        => 'Annuler',
     'map_label'            => 'Carte du lieu',
+    'storage_units'        => ['o', 'Ko', 'Mo', 'Go', 'To'],
+    'storage_db'           => 'BD',
+    'storage_cache'        => 'Cache',
+    'support_link'         => 'Soutenir ce projet',
+    'manifest_description' => 'Système de pointage pour {name}',
+    'csv_col_session'      => 'seance',
+    'csv_col_nickname'     => 'pseudonyme',
+    'csv_col_date'         => 'date',
+    'no_sessions'          => 'Aucune séance disponible.',
 ];

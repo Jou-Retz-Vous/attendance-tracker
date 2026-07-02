@@ -16,6 +16,10 @@ $format     = strtolower(trim($_GET['format'] ?? ''));
 if ($format === 'csv' || $format === 'grist') {
     preg_match('/^([a-z]{2})/i', $_SERVER['HTTP_ACCEPT_LANGUAGE'] ?? 'fr', $m);
     $lang = in_array(strtolower($m[1] ?? 'fr'), ['en']) ? 'en' : 'fr';
+    if (isset($_COOKIE['jrv_lang']) && in_array($_COOKIE['jrv_lang'], ['fr', 'en'], true)) {
+        $lang = $_COOKIE['jrv_lang'];
+    }
+    $t = require __DIR__ . '/../../../lang/' . $lang . '.php';
 
     $calendar = new Calendar(
         $config['calendar_url'],
@@ -41,7 +45,7 @@ if ($format === 'csv' || $format === 'grist') {
     }
 
     if (!$sessionLabels) {
-        header('Content-Type: text/plain'); echo 'Aucune séance disponible.'; exit;
+        header('Content-Type: text/plain'); echo $t['no_sessions']; exit;
     }
 
     $placeholders = implode(',', array_fill(0, count($sessionLabels), '?'));
@@ -61,7 +65,7 @@ if ($format === 'csv' || $format === 'grist') {
         header('Content-Type: text/csv; charset=utf-8');
         header("Content-Disposition: attachment; filename=\"{$baseName}-presences.csv\"");
         $out = fopen('php://output', 'w');
-        fputcsv($out, ['seance', 'pseudonyme', 'date']);
+        fputcsv($out, [$t['csv_col_session'], $t['csv_col_nickname'], $t['csv_col_date']]);
         foreach ($allRows as $row) {
             fputcsv($out, [
                 $sessionLabels[$row['session_uid']],

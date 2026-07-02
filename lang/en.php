@@ -38,4 +38,13 @@ return [
     'confirm_delete'       => 'Confirm?',
     'cancel_action'        => 'Cancel',
     'map_label'            => 'Venue map',
+    'storage_units'        => ['B', 'KB', 'MB', 'GB', 'TB'],
+    'storage_db'           => 'DB',
+    'storage_cache'        => 'Cache',
+    'support_link'         => 'Support this project',
+    'manifest_description' => 'Attendance tracker for {name}',
+    'csv_col_session'      => 'session',
+    'csv_col_nickname'     => 'nickname',
+    'csv_col_date'         => 'date',
+    'no_sessions'          => 'No sessions available.',
 ];

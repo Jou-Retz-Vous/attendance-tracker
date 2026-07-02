@@ -33,13 +33,14 @@ $langName = ['fr' => 'Français', 'en' => 'English'];
 $t = require __DIR__ . '/../../lang/' . $lang . '.php';
 
 // Disk usage
-$fmtBytes = function(int|false $bytes): string {
+$fmtBytes = function(int|false $bytes) use ($t): string {
     if ($bytes === false) return '?';
-    foreach (['o', 'Ko', 'Mo', 'Go'] as $unit) {
+    $units = $t['storage_units'];
+    foreach ($units as $unit) {
         if ($bytes < 1024) return round($bytes) . ' ' . $unit;
         $bytes /= 1024;
     }
-    return round($bytes) . ' To';
+    return round($bytes) . ' ' . end($units);
 };
 $iconUrl       = $config['icon_url'] ?? '/assets/icon.svg';
 $customCssUrl  = $config['custom_css_url'] ?? null;
@@ -48,6 +49,12 @@ $safeCssUrl    = fn(?string $url): ?string => ($url && preg_match('#^(https?://|
 $dbPath        = dirname($config['db_dsn'] === '' ? '' : str_replace('sqlite:', '', $config['db_dsn']));
 $dbSize        = file_exists(str_replace('sqlite:', '', $config['db_dsn'])) ? filesize(str_replace('sqlite:', '', $config['db_dsn'])) : false;
 $cacheSize     = file_exists($config['cache_path']) ? filesize($config['cache_path']) : false;
+$totalSize     = ($dbSize !== false ? $dbSize : 0) + ($cacheSize !== false ? $cacheSize : 0);
+$storageTotal  = ($dbSize === false && $cacheSize === false) ? '?' : $fmtBytes($totalSize);
+$storageDetail = implode(' — ', array_filter([
+    $dbSize    !== false ? $t['storage_db']    . ' : ' . $fmtBytes($dbSize)    : null,
+    $cacheSize !== false ? $t['storage_cache'] . ' : ' . $fmtBytes($cacheSize) : null,
+]));
 
 // Handle POST actions (PRG pattern)
 $feedback = null;
@@ -332,10 +339,10 @@ if ($sessionUid) {
           <?php endif ?>
         <?php endforeach ?>
       </nav>
-      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small d-inline-flex align-items-center gap-1"><i class="bi bi-heart-fill" aria-hidden="true"></i>Soutenir ce projet</a>
+      <a href="https://github.com/sponsors/holyhope" target="_blank" rel="noopener" class="text-secondary small d-inline-flex align-items-center gap-1"><i class="bi bi-heart-fill" aria-hidden="true"></i><?= htmlspecialchars($t['support_link']) ?></a>
     </span>
     <span class="d-flex align-items-center gap-3">
-      <span class="text-muted small d-inline-flex align-items-center gap-1"><i class="bi bi-database" aria-hidden="true"></i><?= $fmtBytes($dbSize) ?> · <?= $fmtBytes($cacheSize) ?></span>
+      <span class="text-muted small d-inline-flex align-items-center gap-1" title="<?= htmlspecialchars($storageDetail) ?>"><i class="bi bi-database" aria-hidden="true"></i><?= $storageTotal ?></span>
       <?php if ($version): ?><span class="text-muted small"><?= htmlspecialchars($version) ?></span><?php endif ?>
     </span>
   </div>
